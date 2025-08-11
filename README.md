@@ -8,6 +8,29 @@
 
 <img src="https://github.com/user-attachments/assets/736f8f55-833d-4200-b833-5fca01a09e1b" width="60%">
 
+## Technology Stack
+
+This project is built with **Node.js v22** and **TypeScript**, providing:
+
+- 🚀 **Modern JavaScript/TypeScript**: ES modules with full type safety
+- 📦 **Node.js 22**: Latest LTS with built-in test runner and enhanced performance
+- 🔧 **TypeScript**: Configured with `erasableSyntaxOnly` for clean compilation
+- 🧪 **Built-in Testing**: Using Node.js built-in test runner (no external dependencies)
+- 🔗 **MCP SDK**: Official Model Context Protocol SDK for robust integration
+- 📝 **Commander.js**: Professional CLI argument parsing
+- 🌍 **Cross-Platform**: Works on Windows, macOS, and Linux
+
+### Migration from Python
+
+This project was originally written in Python and has been completely rewritten in Node.js/TypeScript while maintaining 100% feature compatibility. The migration provides:
+
+- ✅ **Same CLI interface** - All command line arguments work identically
+- ✅ **Same MCP tools** - `list_doc_sources` and `fetch_docs` with identical behavior  
+- ✅ **Same configuration** - YAML/JSON config files use the same format
+- ✅ **Enhanced testing** - 29 comprehensive tests vs previous Python test suite
+- ✅ **Better IDE integration** - Full TypeScript support in modern IDEs
+- ✅ **npm ecosystem** - Easy installation and distribution via npm
+
 ## llms-txt
 
 You can find llms.txt files for langgraph and langchain here:
@@ -21,11 +44,28 @@ You can find llms.txt files for langgraph and langchain here:
 
 ## Quickstart
 
-#### Install uv
-* Please see [official uv docs](https://docs.astral.sh/uv/getting-started/installation/#installation-methods) for other ways to install `uv`.
+#### Install Node.js
+* This project requires Node.js v22 or later. Please see [official Node.js docs](https://nodejs.org/) for installation instructions.
+* You can verify your Node.js version with: `node --version`
 
+#### Install mcpdoc
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
+# Install globally for command line usage
+npm install -g mcpdoc
+
+# Or use npx to run without installing (requires network access)
+npx mcpdoc --help
+```
+
+> **Note**: Once published to npm, mcpdoc will be available as a standard Node.js package. For development and testing, you can build from source using the instructions in the Development section below.
+
+#### Verify installation
+```bash
+# Check that mcpdoc is available
+mcpdoc --version
+
+# View help and available options
+mcpdoc --help
 ```
 
 #### Choose an `llms.txt` file to use. 
@@ -47,7 +87,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 #### (Optional) Test the MCP server locally with your `llms.txt` file(s) of choice:
 ```bash
-uvx --from mcpdoc mcpdoc \
+mcpdoc \
     --urls "LangGraph:https://langchain-ai.github.io/langgraph/llms.txt" "LangChain:https://python.langchain.com/llms.txt" \
     --transport sse \
     --port 8082 \
@@ -80,13 +120,11 @@ npx @modelcontextprotocol/inspector
 {
   "mcpServers": {
     "langgraph-docs-mcp": {
-      "command": "uvx",
+      "command": "mcpdoc",
       "args": [
-        "--from",
-        "mcpdoc",
-        "mcpdoc",
         "--urls",
-        "LangGraph:https://langchain-ai.github.io/langgraph/llms.txt LangChain:https://python.langchain.com/llms.txt",
+        "LangGraph:https://langchain-ai.github.io/langgraph/llms.txt",
+        "LangChain:https://python.langchain.com/llms.txt",
         "--transport",
         "stdio"
       ]
@@ -125,7 +163,24 @@ what are types of memory in LangGraph?
 
 * Open Cascade with `CMD+L` (on Mac).
 * Click `Configure MCP` to open the config file, `~/.codeium/windsurf/mcp_config.json`.
-* Update with `langgraph-docs-mcp` as noted above.
+* Update with `langgraph-docs-mcp` using the Node.js configuration:
+
+```json
+{
+  "mcpServers": {
+    "langgraph-docs-mcp": {
+      "command": "mcpdoc",
+      "args": [
+        "--urls",
+        "LangGraph:https://langchain-ai.github.io/langgraph/llms.txt",
+        "LangChain:https://python.langchain.com/llms.txt",
+        "--transport",
+        "stdio"
+      ]
+    }
+  }
+}
+```
 
 ![Screenshot 2025-03-19 at 11 02 52 AM](https://github.com/user-attachments/assets/d45b427c-1c1e-4602-820a-7161a310af24)
 
@@ -150,25 +205,39 @@ Then, try the example prompt:
 ### Connect to Claude Desktop
 
 * Open `Settings/Developer` to update `~/Library/Application\ Support/Claude/claude_desktop_config.json`.
-* Update with `langgraph-docs-mcp` as noted above.
+* Update with the Node.js configuration:
+
+```json
+{
+  "mcpServers": {
+    "langgraph-docs-mcp": {
+      "command": "mcpdoc",
+      "args": [
+        "--urls",
+        "LangGraph:https://langchain-ai.github.io/langgraph/llms.txt",
+        "LangChain:https://python.langchain.com/llms.txt",
+        "--transport",
+        "stdio"
+      ]
+    }
+  }
+}
+```
+
 * Restart Claude Desktop app.
 
 > [!Note]
-> If you run into issues with Python version incompatibility when trying to add MCPDoc tools to Claude Desktop, you can explicitly specify the filepath to `python` executable in the `uvx` command.
->
+> Make sure you have mcpdoc installed globally with `npm install -g mcpdoc` or use `npx mcpdoc` if you prefer not to install globally.
+> 
 > <details>
-> <summary>Example configuration</summary>
+> <summary>Alternative: Using npx (no global installation)</summary>
 >
-> ```
+> ```json
 > {
 >   "mcpServers": {
 >     "langgraph-docs-mcp": {
->       "command": "uvx",
+>       "command": "npx",
 >       "args": [
->         "--python",
->         "/path/to/python",
->         "--from",
->         "mcpdoc",
 >         "mcpdoc",
 >         "--urls",
 >         "LangGraph:https://langchain-ai.github.io/langgraph/llms.txt",
@@ -210,12 +279,12 @@ Then, try the example prompt:
 ### Connect to Claude Code
 
 * In a terminal after installing [Claude Code](https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview), run this command to add the MCP server to your project:
-```
-claude mcp add-json langgraph-docs '{"type":"stdio","command":"uvx" ,"args":["--from", "mcpdoc", "mcpdoc", "--urls", "langgraph:https://langchain-ai.github.io/langgraph/llms.txt", "LangChain:https://python.langchain.com/llms.txt"]}' -s local
+```bash
+claude mcp add-json langgraph-docs '{"type":"stdio","command":"mcpdoc","args":["--urls", "LangGraph:https://langchain-ai.github.io/langgraph/llms.txt", "LangChain:https://python.langchain.com/llms.txt"]}' -s local
 ```
 * You will see `~/.claude.json` updated.
 * Test by launching Claude Code and running to view your tools:
-```
+```bash
 $ Claude
 $ /mcp 
 ```
@@ -321,26 +390,81 @@ Each source must include an `llms_txt` URL and can optionally include a `name`:
 
 ## Programmatic Usage
 
-```python
-from mcpdoc.main import create_server
+```typescript
+import { createServer } from 'mcpdoc';
 
-# Create a server with documentation sources
-server = create_server(
+// Create a server with documentation sources
+const server = createServer(
     [
         {
-            "name": "LangGraph Python",
-            "llms_txt": "https://langchain-ai.github.io/langgraph/llms.txt",
+            name: "LangGraph Python",
+            llms_txt: "https://langchain-ai.github.io/langgraph/llms.txt",
         },
-        # You can add multiple documentation sources
-        # {
-        #     "name": "Another Documentation",
-        #     "llms_txt": "https://example.com/llms.txt",
-        # },
+        // You can add multiple documentation sources
+        // {
+        //     name: "Another Documentation",
+        //     llms_txt: "https://example.com/llms.txt",
+        // },
     ],
-    follow_redirects=True,
-    timeout=15.0,
-)
+    {
+        followRedirects: true,
+        timeout: 15.0,
+    }
+);
 
-# Run the server
-server.run(transport="stdio")
+// Run the server
+server.run("stdio");
+```
+
+## Development
+
+This project is built with Node.js and TypeScript. Here are the development commands:
+
+```bash
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+
+# Run tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Lint and type check
+npm run lint
+
+# Clean build artifacts
+npm run clean
+
+# Development mode (build and run)
+npm run dev
+
+# Watch for changes and rebuild
+npm run watch
+
+# Show all available commands
+npm run help
+```
+
+### Building from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/chr33s/mcpdoc.git
+cd mcpdoc
+
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+
+# Run tests to verify everything works
+npm test
+
+# Install globally for command line usage
+npm install -g .
 ```
