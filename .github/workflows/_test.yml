@@ -27,7 +27,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.node-version }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install dependencies
         shell: bash
@@ -47,7 +47,7 @@ jobs:
           echo "Testing CLI help output..."
           node dist/cli.js --help
           echo "✅ CLI help works"
-          
+
           echo "Testing CLI version output..."
           node dist/cli.js --version
           echo "✅ CLI version works"

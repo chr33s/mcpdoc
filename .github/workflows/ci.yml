@@ -3,9 +3,9 @@ name: Run CI Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-  workflow_dispatch:  # Allows to trigger the workflow manually in GitHub UI
+  workflow_dispatch: # Allows to trigger the workflow manually in GitHub UI
 
 # If another push to the same PR or branch happens while this workflow is still running,
 # cancel the earlier run in favor of the next run.
@@ -30,8 +30,7 @@ jobs:
         # so linting on fewer versions makes CI faster.
         node-version:
           - "22"
-    uses:
-      ./.github/workflows/_lint.yml
+    uses: ./.github/workflows/_lint.yml
     with:
       working-directory: .
       node-version: ${{ matrix.node-version }}
@@ -49,10 +48,8 @@ jobs:
         node-version:
           - "22"
           - "latest"
-    uses:
-      ./.github/workflows/_test.yml
+    uses: ./.github/workflows/_test.yml
     with:
       working-directory: .
       node-version: ${{ matrix.node-version }}
     secrets: inherit
-

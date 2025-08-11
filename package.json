@@ -18,21 +18,27 @@
 		"watch": "tsc --watch",
 		"test": "npm run build && node --test dist/tests.js",
 		"test:watch": "npm run build && node --test --watch dist/tests.js",
-		"lint": "npm run build && npx tsc --noEmit --strict && echo '✅ TypeScript compilation check passed'",
-		"lint:diff": "npm run lint",
-		"format": "echo 'Note: TypeScript formatting is handled by the compiler and erasableSyntaxOnly configuration' && echo 'Use your editor TypeScript formatter or consider adding prettier if needed'",
-		"format:diff": "npm run lint",
+		"lint": "npm run build && tsc --noEmit --strict && prettier --check . && oxlint --import-plugin",
+		"format": "prettier --write . && oxlint --fix --fix-suggestions --import-plugin",
 		"help": "echo '📦 MCP LLMS-TXT Documentation Server (Node.js/TypeScript)' && echo '' && echo 'Available commands:' && echo '' && echo '🔧 Development:' && echo '  npm run install:ci  Install dependencies with npm ci' && echo '  npm run build       Build TypeScript to JavaScript' && echo '  npm run clean       Clean build artifacts' && echo '  npm run dev         Build and run CLI in development mode' && echo '  npm run watch       Watch TypeScript files for changes' && echo '' && echo '🧪 Testing:' && echo '  npm test            Run all tests' && echo '  npm run test:watch  Run tests in watch mode' && echo '' && echo '🔍 Code Quality:' && echo '  npm run lint        Run TypeScript compiler checks' && echo '  npm run format      Show formatting information' && echo '' && echo '💡 Examples:' && echo '  npm run build && node dist/cli.js --help' && echo '  npm test'"
 	},
 	"dependencies": {
-		"@modelcontextprotocol/sdk": "^1.17.2",
-		"commander": "^12.1.0",
-		"turndown": "^7.1.2",
-		"yaml": "^2.5.1"
+		"@modelcontextprotocol/sdk": "1.17.2",
+		"commander": "14.0.0",
+		"turndown": "7.2.0",
+		"yaml": "2.8.1"
 	},
 	"devDependencies": {
-		"@types/node": "^22.7.4",
-		"@types/turndown": "^5.0.5",
-		"typescript": "^5.5.4"
+		"@prettier/plugin-oxc": "0.0.4",
+		"@types/node": "22.7.4",
+		"@types/turndown": "5.0.5",
+		"oxlint": "1.11.1",
+		"prettier": "3.6.2",
+		"typescript": "5.9.2"
+	},
+	"prettier": {
+		"plugins": [
+			"@prettier/plugin-oxc"
+		]
 	}
 }
