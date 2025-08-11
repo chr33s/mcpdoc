@@ -53,10 +53,10 @@ You can find llms.txt files for langgraph and langchain here:
 
 ```bash
 # Install globally for command line usage
-npm install -g mcpdoc
+npm install -g @chr33s/mcpdoc
 
 # Or use npx to run without installing (requires network access)
-npx mcpdoc --help
+npx @chr33s/mcpdoc --help
 ```
 
 > **Note**: Once published to npm, mcpdoc will be available as a standard Node.js package. For development and testing, you can build from source using the instructions in the Development section below.
@@ -233,7 +233,7 @@ Then, try the example prompt:
 - Restart Claude Desktop app.
 
 > [!Note]
-> Make sure you have mcpdoc installed globally with `npm install -g mcpdoc` or use `npx mcpdoc` if you prefer not to install globally.
+> Make sure you have mcpdoc installed globally with `npm install -g @chr33s/mcpdoc` or use `npx @chr33s/mcpdoc` if you prefer not to install globally.
 >
 > <details>
 > <summary>Alternative: Using npx (no global installation)</summary>
@@ -401,7 +401,7 @@ Each source must include an `llms_txt` URL and can optionally include a `name`:
 ## Programmatic Usage
 
 ```typescript
-import { createServer } from "mcpdoc";
+import { createServer } from "@chr33s/mcpdoc";
 
 // Create a server with documentation sources
 const server = createServer(
