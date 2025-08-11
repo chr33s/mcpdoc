@@ -1,0 +1,21 @@
+{
+	"chat.agent.maxRequests": 100,
+	"chat.mcp.discovery.enabled": true,
+	"chat.tools.autoApprove": true,
+	"editor.bracketPairColorization.enabled": true,
+	"diffEditor.diffAlgorithm": "advanced",
+	"diffEditor.experimental.showMoves": true,
+	"editor.codeActionsOnSave": {
+		"source.fixAll": "explicit"
+	},
+	"editor.defaultFormatter": "oxc.oxc-vscode",
+	"editor.guides.bracketPairs": "active",
+	"files.associations": {
+		".env*": "properties"
+	},
+	"files.insertFinalNewline": true,
+	"oxc.enable": true,
+	"terminal.integrated.suggest.enabled": true,
+	"typescript.enablePromptUseWorkspaceTsdk": true,
+	"typescript.tsdk": "node_modules/typescript/lib"
+}
