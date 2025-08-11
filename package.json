@@ -1,9 +1,21 @@
 {
-	"name": "mcpdoc",
+	"name": "@chr33s/mcpdoc",
 	"version": "0.0.10",
 	"description": "Server llms-txt documentation over MCP (Node.js/TypeScript)",
 	"license": "MIT",
 	"type": "module",
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"author": "chr33s",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/chr33s/mcpdoc"
+	},
+	"keywords": [
+		"mcpdoc"
+	],
 	"engines": {
 		"node": ">=22"
 	},
