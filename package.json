@@ -1,0 +1,31 @@
+{
+	"name": "mcpdoc",
+	"version": "0.0.10",
+	"description": "Server llms-txt documentation over MCP (Node.js/TypeScript)",
+	"license": "MIT",
+	"type": "module",
+	"engines": {
+		"node": ">=22"
+	},
+	"bin": {
+		"mcpdoc": "./dist/cli.js"
+	},
+	"scripts": {
+		"build": "tsc",
+		"clean": "rm -rf dist",
+		"start": "node dist/cli.js",
+		"dev": "npm run build && node dist/cli.js",
+		"watch": "tsc --watch"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.17.2",
+		"commander": "^12.1.0",
+		"turndown": "^7.1.2",
+		"yaml": "^2.5.1"
+	},
+	"devDependencies": {
+		"@types/node": "^22.7.4",
+		"@types/turndown": "^5.0.5",
+		"typescript": "^5.5.4"
+	}
+}
