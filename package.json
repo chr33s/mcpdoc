@@ -17,7 +17,12 @@
 		"dev": "npm run build && node dist/cli.js",
 		"watch": "tsc --watch",
 		"test": "npm run build && node --test dist/tests.js",
-		"test:watch": "npm run build && node --test --watch dist/tests.js"
+		"test:watch": "npm run build && node --test --watch dist/tests.js",
+		"lint": "npm run build && npx tsc --noEmit --strict && echo '✅ TypeScript compilation check passed'",
+		"lint:diff": "npm run lint",
+		"format": "echo 'Note: TypeScript formatting is handled by the compiler and erasableSyntaxOnly configuration' && echo 'Use your editor TypeScript formatter or consider adding prettier if needed'",
+		"format:diff": "npm run lint",
+		"help": "echo '📦 MCP LLMS-TXT Documentation Server (Node.js/TypeScript)' && echo '' && echo 'Available commands:' && echo '' && echo '🔧 Development:' && echo '  npm run install:ci  Install dependencies with npm ci' && echo '  npm run build       Build TypeScript to JavaScript' && echo '  npm run clean       Clean build artifacts' && echo '  npm run dev         Build and run CLI in development mode' && echo '  npm run watch       Watch TypeScript files for changes' && echo '' && echo '🧪 Testing:' && echo '  npm test            Run all tests' && echo '  npm run test:watch  Run tests in watch mode' && echo '' && echo '🔍 Code Quality:' && echo '  npm run lint        Run TypeScript compiler checks' && echo '  npm run format      Show formatting information' && echo '' && echo '💡 Examples:' && echo '  npm run build && node dist/cli.js --help' && echo '  npm test'"
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.17.2",

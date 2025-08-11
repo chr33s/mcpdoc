@@ -1,63 +1,62 @@
-.PHONY: all lint format test help start_mcp test_integration
+.PHONY: all help install build clean dev watch test test_watch lint format
 
 # Default target executed when no arguments are given to make.
 all: help
 
 ######################
-# TESTING AND COVERAGE
+# NPM SCRIPT DELEGATION
+# All commands now delegate to package.json scripts
 ######################
 
-# Define a variable for the test file path.
-TEST_FILE ?= tests/unit_tests
+install:
+	npm run install:ci
+
+build:
+	npm run build
+
+clean:
+	npm run clean
+
+dev:
+	npm run dev
+
+watch:
+	npm run watch
 
 test:
-	uv run pytest --disable-socket --allow-unix-socket $(TEST_FILE)
+	npm test
 
 test_watch:
-	uv run ptw . -- $(TEST_FILE)
+	npm run test:watch
 
-.PHONY: test_integration
+lint:
+	npm run lint
 
+format:
+	npm run format
 
-######################
-# LINTING AND FORMATTING
-######################
-
-# Define a variable for Python and notebook files.
-lint format: PYTHON_FILES=.
-lint_diff format_diff: PYTHON_FILES=$(shell git diff --relative=. --name-only --diff-filter=d master | grep -E '\.py$$|\.ipynb$$')
-
-lint lint_diff:
-	[ "$(PYTHON_FILES)" = "" ] ||	uv run ruff format $(PYTHON_FILES) --diff
-	[ "$(PYTHON_FILES)" = "" ] ||	uv run ruff check $(PYTHON_FILES) --diff
-	# [ "$(PYTHON_FILES)" = "" ] || uv run mypy $(PYTHON_FILES)
-
-format format_diff:
-	[ "$(PYTHON_FILES)" = "" ] || uv run ruff format $(PYTHON_FILES)
-	[ "$(PYTHON_FILES)" = "" ] || uv run ruff check --fix $(PYTHON_FILES)
-
-
-generate_examples:
-	uv run langgraph-gen examples/agentic_rag/spec.yml --language python
-	uv run langgraph-gen examples/agentic_rag/spec.yml --language typescript
-	uv run langgraph-gen examples/rag/spec.yml --language python
-	uv run langgraph-gen examples/rag/spec.yml --language typescript
-	
+# Legacy compatibility
+lint_diff format_diff: lint
 
 ######################
 # HELP
 ######################
 
 help:
-	@echo '===================='
-	@echo '-- LINTING --'
-	@echo 'format                       - run code formatters'
-	@echo 'lint                         - run linters'
-	@echo 'spell_check                 	- run codespell on the project'
-	@echo 'spell_fix                		- run codespell on the project and fix the errors'
-	@echo '-- TESTS --'
-	@echo 'coverage                     - run unit tests and generate coverage report'
-	@echo 'test                         - run unit tests'
-	@echo 'test TEST_FILE=<test_file>   - run all tests in file'
-	@echo '-- DOCUMENTATION tasks are from the top-level Makefile --'
+	@echo ""
+	@echo "� MIGRATION NOTICE: This project now uses npm scripts instead of Make"
+	@echo ""
+	@echo "Use these npm commands directly:"
+	@echo "  npm run help     - Show all available commands"
+	@echo "  npm test         - Run tests"
+	@echo "  npm run build    - Build the project"
+	@echo "  npm run lint     - Lint the code"
+	@echo ""
+	@echo "Or continue using make commands (they delegate to npm):"
+	@echo "  make test        - Same as 'npm test'"
+	@echo "  make build       - Same as 'npm run build'"
+	@echo "  make lint        - Same as 'npm run lint'"
+	@echo ""
+	@echo "For full command list, run: npm run help"
+	@echo ""
 

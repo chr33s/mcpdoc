@@ -7,38 +7,40 @@ on:
         required: true
         type: string
         description: "From which folder this pipeline executes"
-      python-version:
+      node-version:
         required: true
         type: string
-        description: "Python version to use"
+        description: "Node.js version to use"
 
 env:
   WORKDIR: ${{ inputs.working-directory == '' && '.' || inputs.working-directory }}
 
-  # This env var allows us to get inline annotations when ruff has complaints.
-  RUFF_OUTPUT_FORMAT: github
-
-  UV_FROZEN: "true"
-
 jobs:
   build:
-    name: "make lint #${{ inputs.python-version }}"
+    name: "lint #node${{ inputs.node-version }}"
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ inputs.python-version }} + uv
-        uses: "./.github/actions/uv_setup"
+      - name: Set up Node.js ${{ inputs.node-version }}
+        uses: actions/setup-node@v4
         with:
-          python-version: ${{ inputs.python-version }}
+          node-version: ${{ inputs.node-version }}
+          cache: 'npm'
 
       - name: Install dependencies
         working-directory: ${{ inputs.working-directory }}
         run: |
-          uv sync --group test
+          npm ci
 
-      - name: Analysing the code with our lint
+      - name: Build TypeScript
         working-directory: ${{ inputs.working-directory }}
         run: |
-          make lint
+          npm run build
+
+      - name: Lint TypeScript code
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          npx tsc --noEmit --strict
+          echo "✅ TypeScript compilation check passed"

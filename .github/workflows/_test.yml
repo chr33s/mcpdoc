@@ -7,14 +7,10 @@ on:
         required: true
         type: string
         description: "From which folder this pipeline executes"
-      python-version:
+      node-version:
         required: true
         type: string
-        description: "Python version to use"
-
-env:
-  UV_FROZEN: "true"
-  UV_NO_SYNC: "true"
+        description: "Node.js version to use"
 
 jobs:
   build:
@@ -23,20 +19,42 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    name: "make test #${{ inputs.python-version }}"
+    name: "test #node${{ inputs.node-version }}"
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ inputs.python-version }} + uv
-        uses: "./.github/actions/uv_setup"
-        id: setup-python
+      - name: Set up Node.js ${{ inputs.node-version }}
+        uses: actions/setup-node@v4
         with:
-          python-version: ${{ inputs.python-version }}
+          node-version: ${{ inputs.node-version }}
+          cache: 'npm'
+
       - name: Install dependencies
         shell: bash
-        run: uv sync --group test
+        run: npm ci
 
-      - name: Run core tests
+      - name: Build TypeScript
+        shell: bash
+        run: npm run build
+
+      - name: Run tests
+        shell: bash
+        run: npm test
+
+      - name: Test CLI functionality
         shell: bash
         run: |
-          make test
+          echo "Testing CLI help output..."
+          node dist/cli.js --help
+          echo "✅ CLI help works"
+          
+          echo "Testing CLI version output..."
+          node dist/cli.js --version
+          echo "✅ CLI version works"
+
+      - name: Test MCP tools functionality
+        shell: bash
+        run: |
+          echo "Testing MCP tools..."
+          echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}' | timeout 10s node dist/cli.js --urls "Test:https://example.com/llms.txt" --transport stdio
+          echo "✅ MCP tools work"
