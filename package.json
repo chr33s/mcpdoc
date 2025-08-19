@@ -24,15 +24,15 @@
 	},
 	"scripts": {
 		"build": "tsc",
+		"check": "tsc --noEmit --strict && prettier --check . && oxlint --import-plugin",
 		"clean": "rm -rf dist",
-		"start": "node dist/cli.js",
 		"dev": "node --watch ./src/cli.ts",
-		"watch": "tsc --watch",
-		"test": "npm run build && node --test dist/tests.js",
-		"test:watch": "npm run build && node --test --watch dist/tests.js",
-		"lint": "npm run build && tsc --noEmit --strict && prettier --check . && oxlint --import-plugin",
-		"format": "prettier --write . && oxlint --fix --fix-suggestions --import-plugin",
-		"help": "echo '📦 MCP LLMS-TXT Documentation Server (Node.js/TypeScript)' && echo '' && echo 'Available commands:' && echo '' && echo '🔧 Development:' && echo '  npm run install:ci  Install dependencies with npm ci' && echo '  npm run build       Build TypeScript to JavaScript' && echo '  npm run clean       Clean build artifacts' && echo '  npm run dev         Build and run CLI in development mode' && echo '  npm run watch       Watch TypeScript files for changes' && echo '' && echo '🧪 Testing:' && echo '  npm test            Run all tests' && echo '  npm run test:watch  Run tests in watch mode' && echo '' && echo '🔍 Code Quality:' && echo '  npm run lint        Run TypeScript compiler checks' && echo '  npm run format      Show formatting information' && echo '' && echo '💡 Examples:' && echo '  npm run build && node dist/cli.js --help' && echo '  npm test'"
+		"fix": "prettier --write . && oxlint --fix --fix-suggestions --import-plugin",
+		"help": "echo '📦 MCP LLMS-TXT Documentation Server (Node.js/TypeScript)' && echo '' && echo 'Available commands:' && echo '' && echo '🔧 Development:' && echo '  npm run install:ci  Install dependencies with npm ci' && echo '  npm run build       Build TypeScript to JavaScript' && echo '  npm run clean       Clean build artifacts' && echo '  npm run dev         Build and run CLI in development mode' && echo '  npm run watch       Watch TypeScript files for changes' && echo '' && echo '🧪 Testing:' && echo '  npm test            Run all tests' && echo '  npm run test:watch  Run tests in watch mode' && echo '' && echo '🔍 Code Quality:' && echo '  npm run lint        Run TypeScript compiler checks' && echo '  npm run format      Show formatting information' && echo '' && echo '💡 Examples:' && echo '  npm run build && node dist/cli.js --help' && echo '  npm test'",
+		"start": "node dist/cli.js",
+		"test": "node --test dist/tests.js",
+		"test:watch": "node --test --watch dist/tests.js",
+		"watch": "tsc --watch"
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "1.17.3",

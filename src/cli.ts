@@ -14,8 +14,9 @@ import { createServer } from "./server.js";
 import { SPLASH } from "./splash.js";
 import type { DocSource, ServerSettings } from "./types.js";
 
-// Version from package.json
-const VERSION = "0.0.10";
+import pkg from "../package.json" with { type: "json" };
+
+const VERSION = pkg.version;
 
 const EPILOG = `
 Examples:
