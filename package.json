@@ -17,7 +17,7 @@
 		"mcpdoc"
 	],
 	"engines": {
-		"node": ">=22"
+		"node": ">=22.18.0"
 	},
 	"bin": {
 		"mcpdoc": "./dist/cli.js"
@@ -26,7 +26,7 @@
 		"build": "tsc",
 		"clean": "rm -rf dist",
 		"start": "node dist/cli.js",
-		"dev": "npm run build && node dist/cli.js",
+		"dev": "node --watch ./src/cli.ts",
 		"watch": "tsc --watch",
 		"test": "npm run build && node --test dist/tests.js",
 		"test:watch": "npm run build && node --test --watch dist/tests.js",
@@ -35,16 +35,16 @@
 		"help": "echo '📦 MCP LLMS-TXT Documentation Server (Node.js/TypeScript)' && echo '' && echo 'Available commands:' && echo '' && echo '🔧 Development:' && echo '  npm run install:ci  Install dependencies with npm ci' && echo '  npm run build       Build TypeScript to JavaScript' && echo '  npm run clean       Clean build artifacts' && echo '  npm run dev         Build and run CLI in development mode' && echo '  npm run watch       Watch TypeScript files for changes' && echo '' && echo '🧪 Testing:' && echo '  npm test            Run all tests' && echo '  npm run test:watch  Run tests in watch mode' && echo '' && echo '🔍 Code Quality:' && echo '  npm run lint        Run TypeScript compiler checks' && echo '  npm run format      Show formatting information' && echo '' && echo '💡 Examples:' && echo '  npm run build && node dist/cli.js --help' && echo '  npm test'"
 	},
 	"dependencies": {
-		"@modelcontextprotocol/sdk": "1.17.2",
+		"@modelcontextprotocol/sdk": "1.17.3",
 		"commander": "14.0.0",
-		"turndown": "7.2.0",
+		"turndown": "7.2.1",
 		"yaml": "2.8.1"
 	},
 	"devDependencies": {
 		"@prettier/plugin-oxc": "0.0.4",
-		"@types/node": "22.7.4",
+		"@types/node": "24.3.0",
 		"@types/turndown": "5.0.5",
-		"oxlint": "1.11.1",
+		"oxlint": "1.12.0",
 		"prettier": "3.6.2",
 		"typescript": "5.9.2"
 	},
