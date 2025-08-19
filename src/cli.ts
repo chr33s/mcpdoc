@@ -6,13 +6,12 @@
 import { readFile } from "fs/promises";
 import { resolve } from "path";
 import { createServer as createHttpServer } from "http";
-import { Command } from "commander";
+import { parseArgs } from "node:util";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { createServer } from "./server.js";
 import { SPLASH } from "./splash.js";
 import type { DocSource, ServerSettings } from "./types.js";
-
 import pkg from "../package.json" with { type: "json" };
 
 const VERSION = pkg.version;
@@ -53,7 +52,6 @@ Examples:
 async function loadJsonConfigFile(filePath: string): Promise<DocSource[]> {
 	try {
 		const content = await readFile(resolve(filePath), "utf-8");
-		("		");
 		const config: unknown = JSON.parse(content);
 
 		if (!Array.isArray(config)) {
@@ -75,10 +73,8 @@ async function loadJsonConfigFile(filePath: string): Promise<DocSource[]> {
 function createDocSourcesFromUrls(urls: string[]): DocSource[] {
 	const docSources: DocSource[] = [];
 	for (const entry of urls) {
-		if (!entry.trim()) {
-			continue;
-		}
 		// Check if it has name:url format (but not if it starts with http: or https:)
+		if (!entry.trim()) continue;
 		const colonIndex = entry.indexOf(":");
 		if (
 			colonIndex > 0 &&
@@ -98,64 +94,87 @@ function createDocSourcesFromUrls(urls: string[]): DocSource[] {
 	return docSources;
 }
 
-/**
- * Main CLI entry point
- */
 async function main(): Promise<void> {
-	const program = new Command();
+	const { values } = parseArgs({
+		args: process.argv.slice(2),
+		options: {
+			config: { type: "string", short: "c" },
+			urls: { type: "string", multiple: true, short: "u" },
+			"follow-redirects": { type: "boolean", default: false },
+			"allowed-domains": { type: "string", multiple: true },
+			timeout: { type: "string", default: "10.0" },
+			transport: { type: "string", default: "stdio" },
+			"log-level": { type: "string", default: "INFO" },
+			host: { type: "string", default: "127.0.0.1" },
+			port: { type: "string", default: "8000" },
+			version: { type: "boolean" },
+			help: { type: "boolean" },
+		},
+		strict: false,
+		allowPositionals: true,
+	});
 
-	program
-		.name("mcpdoc")
-		.description("MCP LLMS-TXT Documentation Server")
-		.version(VERSION)
-		.addHelpText("after", EPILOG);
-
-	// Allow combining multiple doc source methods
-	program
-		.option("-c, --config <file>", "Path to JSON config file with doc sources")
-		.option(
-			"-u, --urls <urls...>",
-			'List of llms.txt URLs or file paths with optional names (format: "url_or_path" or "name:url_or_path")',
-		)
-		.option("--follow-redirects", "Whether to follow HTTP redirects", false)
-		.option(
-			"--allowed-domains <domains...>",
-			'Additional allowed domains to fetch documentation from. Use "*" to allow all domains.',
-		)
-		.option("--timeout <seconds>", "HTTP request timeout in seconds", "10.0")
-		.option(
-			"--transport <transport>",
-			"Transport protocol for MCP server",
-			"stdio",
-		)
-		.option(
-			"--log-level <level>",
-			"Log level for the server (only used with --transport sse)",
-			"INFO",
-		)
-		.option(
-			"--host <host>",
-			"Host to bind the server to (only used with --transport sse)",
-			"127.0.0.1",
-		)
-		.option(
-			"--port <port>",
-			"Port to bind the server to (only used with --transport sse)",
-			"8000",
-		);
-
-	// Parse arguments
-	program.parse();
-	const options = program.opts();
-
-	// Check if no arguments were provided
-	if (process.argv.length === 2) {
-		program.help();
+	// Show version
+	if (values.version) {
+		console.log(`mcpdoc v${VERSION}`);
 		return;
 	}
 
-	// Check if any source options were provided
-	if (!options.config && !options.urls) {
+	const showHelp = () => {
+		console.log(`mcpdoc v${VERSION}`);
+		console.log();
+		console.log("MCP LLMS-TXT Documentation Server");
+		console.log();
+		console.log("Usage: mcpdoc [options]");
+		console.log();
+		console.log("Options:");
+		console.log(
+			"  -c, --config <file>          Path to JSON config file with doc sources",
+		);
+		console.log(
+			"  -u, --urls <urls...>          List of llms.txt URLs or file paths with optional names",
+		);
+		console.log(
+			"                                 (format: 'url_or_path' or 'name:url_or_path')",
+		);
+		console.log(
+			"      --follow-redirects         Whether to follow HTTP redirects (default: false)",
+		);
+		console.log(
+			"      --allowed-domains <domains...> Additional allowed domains. Use '*' to allow all",
+		);
+		console.log(
+			"      --timeout <seconds>        HTTP request timeout in seconds (default: 10.0)",
+		);
+		console.log(
+			"      --transport <transport>    Transport protocol for MCP server (stdio|sse) (default: stdio)",
+		);
+		console.log(
+			"      --log-level <level>        Log level for the server (SSE only) (default: INFO)",
+		);
+		console.log(
+			"      --host <host>              Host to bind the server (SSE only) (default: 127.0.0.1)",
+		);
+		console.log(
+			"      --port <port>              Port to bind the server (SSE only) (default: 8000)",
+		);
+		console.log("      --version                 Show version");
+		console.log("      --help                    Show this help and exit");
+		console.log(EPILOG);
+	};
+
+	if (values.help || process.argv.length === 2) {
+		showHelp();
+		return;
+	}
+
+	// Merge env overrides (e.g., MCPDOC_TIMEOUT) if provided (prefer parseEnv values, fallback to process.env)
+	const timeoutSecondsEnv =
+		(process.env.MCPDOC_TIMEOUT as string | undefined) ??
+		process.env.MCPDOC_TIMEOUT;
+	if (timeoutSecondsEnv && !values.timeout) values.timeout = timeoutSecondsEnv;
+
+	if (!values.config && !values.urls) {
 		console.error(
 			"Error: At least one source option (--config or --urls) is required",
 		);
@@ -166,37 +185,52 @@ async function main(): Promise<void> {
 	const docSources: DocSource[] = [];
 
 	// Merge doc sources from all provided methods
-	if (options.config) {
-		const configSources = await loadJsonConfigFile(options.json);
+	if (typeof values.config === "string") {
+		const configSources = await loadJsonConfigFile(values.config);
 		docSources.push(...configSources);
 	}
-	if (options.urls) {
-		const urlSources = createDocSourcesFromUrls(options.urls);
+	if (Array.isArray(values.urls)) {
+		const urlSources = createDocSourcesFromUrls(
+			values.urls.filter((u): u is string => typeof u === "string"),
+		);
 		docSources.push(...urlSources);
 	}
 
 	// Validate transport option
-	if (!["stdio", "sse"].includes(options.transport)) {
+	const transport =
+		typeof values.transport === "string" ? values.transport : "stdio";
+	if (!transport || !["stdio", "sse"].includes(transport)) {
 		console.error('Error: --transport must be either "stdio" or "sse"');
 		process.exit(1);
 	}
 
-	// Server settings for SSE transport
 	const settings: ServerSettings = {
-		host: options.host,
-		port: parseInt(options.port, 10),
-		log_level: options.logLevel,
+		host: typeof values.host === "string" ? values.host : "127.0.0.1",
+		port: parseInt(typeof values.port === "string" ? values.port : "8000", 10),
+		log_level:
+			typeof values["log-level"] === "string"
+				? (values["log-level"] as string)
+				: "INFO",
 	};
 
-	// Create and configure the server
+	const allowedDomains = Array.isArray(values["allowed-domains"])
+		? values["allowed-domains"].filter(
+				(d): d is string => typeof d === "string",
+			)
+		: [];
+
 	const server = await createServer(docSources, {
-		followRedirects: options.followRedirects,
-		timeout: parseFloat(options.timeout) * 1000, // Convert to milliseconds
+		followRedirects:
+			Boolean(values["follow-redirects"]) &&
+			values["follow-redirects"] !== "false",
+		timeout:
+			parseFloat(typeof values.timeout === "string" ? values.timeout : "10.0") *
+			1000,
 		settings,
-		allowedDomains: options.allowedDomains || [],
+		allowedDomains,
 	});
 
-	if (options.transport === "sse") {
+	if (transport === "sse") {
 		console.log();
 		console.log(SPLASH);
 		console.log();
@@ -209,9 +243,9 @@ async function main(): Promise<void> {
 
 			if (url.pathname === "/sse") {
 				// Handle SSE connection
-				const transport = new SSEServerTransport("/message", res);
-				server.connect(transport);
-				transport.start();
+				const transportInstance = new SSEServerTransport("/message", res);
+				server.connect(transportInstance);
+				transportInstance.start();
 			} else if (url.pathname === "/message") {
 				// Handle POST messages
 				let body = "";
@@ -239,9 +273,8 @@ async function main(): Promise<void> {
 			);
 		});
 	} else {
-		// stdio transport
-		const transport = new StdioServerTransport();
-		await server.connect(transport);
+		const transportInstance = new StdioServerTransport();
+		await server.connect(transportInstance);
 	}
 }
 
