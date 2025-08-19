@@ -37,8 +37,7 @@
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "1.17.3",
 		"commander": "14.0.0",
-		"turndown": "7.2.1",
-		"yaml": "2.8.1"
+		"turndown": "7.2.1"
 	},
 	"devDependencies": {
 		"@prettier/plugin-oxc": "0.0.4",

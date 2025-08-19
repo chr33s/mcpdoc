@@ -7,7 +7,6 @@ import { readFile } from "fs/promises";
 import { resolve } from "path";
 import { createServer as createHttpServer } from "http";
 import { Command } from "commander";
-import * as YAML from "yaml";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { createServer } from "./server.js";
@@ -20,55 +19,42 @@ const VERSION = pkg.version;
 
 const EPILOG = `
 Examples:
-  # Directly specifying llms.txt URLs with optional names
-  mcpdoc --urls LangGraph:https://langchain-ai.github.io/langgraph/llms.txt
+	# Directly specifying llms.txt URLs with optional names
+	mcpdoc --urls LangGraph:https://langchain-ai.github.io/langgraph/llms.txt
   
-  # Using a local file (absolute or relative path)
-  mcpdoc --urls LocalDocs:/path/to/llms.txt --allowed-domains '*'
+	# Using a local file (absolute or relative path)
+	mcpdoc --urls LocalDocs:/path/to/llms.txt --allowed-domains '*'
   
-  # Using a YAML config file
-  mcpdoc --yaml sample_config.yaml
+	# Using a JSON config file
+	mcpdoc --config sample_config.json
 
-  # Using a JSON config file
-  mcpdoc --json sample_config.json
+	# Combining multiple documentation sources
+	mcpdoc --config sample_config.json --urls LangGraph:https://langchain-ai.github.io/langgraph/llms.txt
 
-  # Combining multiple documentation sources
-  mcpdoc --yaml sample_config.yaml --json sample_config.json --urls LangGraph:https://langchain-ai.github.io/langgraph/llms.txt
-
-  # Using SSE transport with default host (127.0.0.1) and port (8000)
-  mcpdoc --yaml sample_config.yaml --transport sse
+	# Using SSE transport with default host (127.0.0.1) and port (8000)
+	mcpdoc --config sample_config.json --transport sse
   
-  # Using SSE transport with custom host and port
-  mcpdoc --yaml sample_config.yaml --transport sse --host 0.0.0.0 --port 9000
+	# Using SSE transport with custom host and port
+	mcpdoc --config sample_config.json --transport sse --host 0.0.0.0 --port 9000
   
-  # Using SSE transport with additional HTTP options
-  mcpdoc --yaml sample_config.yaml --follow-redirects --timeout 15 --transport sse --host localhost --port 8080
+	# Using SSE transport with additional HTTP options
+	mcpdoc --config sample_config.json --follow-redirects --timeout 15 --transport sse --host localhost --port 8080
   
-  # Allow fetching from additional domains. The domains hosting the llms.txt files are always allowed.
-  mcpdoc --yaml sample_config.yaml --allowed-domains https://example.com/ https://another-example.com/
+	# Allow fetching from additional domains. The domains hosting the llms.txt files are always allowed.
+	mcpdoc --config sample_config.json --allowed-domains https://example.com/ https://another-example.com/
   
-  # Allow fetching from any domain
-  mcpdoc --yaml sample_config.yaml --allowed-domains '*'
+	# Allow fetching from any domain
+	mcpdoc --config sample_config.json --allowed-domains '*'
 `;
 
 /**
  * Load configuration from a file.
  */
-async function loadConfigFile(
-	filePath: string,
-	fileFormat: string,
-): Promise<DocSource[]> {
+async function loadJsonConfigFile(filePath: string): Promise<DocSource[]> {
 	try {
 		const content = await readFile(resolve(filePath), "utf-8");
-		let config: unknown;
-
-		if (fileFormat.toLowerCase() === "yaml") {
-			config = YAML.parse(content);
-		} else if (fileFormat.toLowerCase() === "json") {
-			config = JSON.parse(content);
-		} else {
-			throw new Error(`Unsupported file format: ${fileFormat}`);
-		}
+		("		");
+		const config: unknown = JSON.parse(content);
 
 		if (!Array.isArray(config)) {
 			throw new Error("Config file must contain a list of doc sources");
@@ -126,8 +112,7 @@ async function main(): Promise<void> {
 
 	// Allow combining multiple doc source methods
 	program
-		.option("-y, --yaml <file>", "Path to YAML config file with doc sources")
-		.option("-j, --json <file>", "Path to JSON config file with doc sources")
+		.option("-c, --config <file>", "Path to JSON config file with doc sources")
 		.option(
 			"-u, --urls <urls...>",
 			'List of llms.txt URLs or file paths with optional names (format: "url_or_path" or "name:url_or_path")',
@@ -170,9 +155,9 @@ async function main(): Promise<void> {
 	}
 
 	// Check if any source options were provided
-	if (!options.yaml && !options.json && !options.urls) {
+	if (!options.config && !options.urls) {
 		console.error(
-			"Error: At least one source option (--yaml, --json, or --urls) is required",
+			"Error: At least one source option (--config or --urls) is required",
 		);
 		process.exit(1);
 	}
@@ -181,13 +166,9 @@ async function main(): Promise<void> {
 	const docSources: DocSource[] = [];
 
 	// Merge doc sources from all provided methods
-	if (options.yaml) {
-		const yamlSources = await loadConfigFile(options.yaml, "yaml");
-		docSources.push(...yamlSources);
-	}
-	if (options.json) {
-		const jsonSources = await loadConfigFile(options.json, "json");
-		docSources.push(...jsonSources);
+	if (options.config) {
+		const configSources = await loadJsonConfigFile(options.json);
+		docSources.push(...configSources);
 	}
 	if (options.urls) {
 		const urlSources = createDocSourcesFromUrls(options.urls);

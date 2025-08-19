@@ -35,8 +35,7 @@ export interface ServerSettings {
  * CLI arguments interface
  */
 export interface CLIArgs {
-	yaml?: string;
-	json?: string;
+	config?: string;
 	urls?: string[];
 	followRedirects?: boolean;
 	allowedDomains?: string[];

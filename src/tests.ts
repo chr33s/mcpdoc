@@ -228,24 +228,13 @@ describe("Error handling", () => {
 
 describe("Configuration file format compatibility", () => {
 	test("should accept valid DocSource arrays", () => {
-		const yamlConfig: DocSource[] = [
-			{
-				name: "LangGraph Python",
-				llms_txt: "https://langchain-ai.github.io/langgraph/llms.txt",
-			},
-		];
-
 		const jsonConfig: DocSource[] = [
 			{
 				name: "LangGraph Python",
 				llms_txt: "https://langchain-ai.github.io/langgraph/llms.txt",
 			},
 		];
-
-		assert.ok(Array.isArray(yamlConfig));
 		assert.ok(Array.isArray(jsonConfig));
-		assert.strictEqual(yamlConfig[0].name, jsonConfig[0].name);
-		assert.strictEqual(yamlConfig[0].llms_txt, jsonConfig[0].llms_txt);
 	});
 });
 
