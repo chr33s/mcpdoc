@@ -19,6 +19,6 @@
 		"verbatimModuleSyntax": true,
 		"erasableSyntaxOnly": true
 	},
-	"include": ["src/**/*"],
-	"exclude": ["node_modules", "dist", "tests"]
+	"include": ["src/**/*", "./worker-configuration.d.ts"],
+	"exclude": ["node_modules", "dist"]
 }

@@ -3,9 +3,9 @@
  * Command-line interface for MCP LLMS-TXT Documentation Server
  */
 
-import { readFile } from "fs/promises";
-import { resolve } from "path";
-import { createServer as createHttpServer } from "http";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { createServer as createHttpServer } from "node:http";
 import { parseArgs } from "node:util";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";

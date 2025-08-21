@@ -2,9 +2,9 @@
  * MCP LLMS-TXT Documentation Server implementation
  */
 
-import { promises as fs } from "fs";
-import { resolve } from "path";
-import { URL } from "url";
+import { promises as fs } from "node:fs";
+import { resolve } from "node:path";
+import { URL } from "node:url";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
 	CallToolRequestSchema,

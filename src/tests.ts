@@ -355,3 +355,70 @@ describe("Python to TypeScript migration compatibility", () => {
 		assert.ok(remoteServer, "Should create server with remote sources");
 	});
 });
+
+// Lightweight test for Cloudflare Worker transport implementation
+describe("Worker transport", () => {
+	test("should establish SSE stream and return initial data", async () => {
+		const workerMod: any = await import("./worker.js");
+		const worker = workerMod.default;
+		assert.ok(worker && typeof worker.fetch === "function");
+
+		const env = {
+			DOC_SOURCES_JSON: JSON.stringify([
+				{ llms_txt: "https://example.com/llms.txt" },
+			]),
+		};
+
+		const sseResp = await worker.fetch(
+			new Request("http://localhost/sse"),
+			env,
+		);
+		assert.strictEqual(
+			sseResp.headers.get("content-type"),
+			"text/event-stream",
+		);
+		const reader = sseResp.body?.getReader();
+		assert.ok(reader);
+		const { value } = await reader.read();
+		if (value) {
+			const firstChunk =
+				value instanceof Uint8Array
+					? new TextDecoder().decode(value)
+					: String(value);
+			assert.ok(firstChunk.length > 0, "First SSE chunk should not be empty");
+		}
+		await reader.cancel();
+	});
+});
+
+// Test the /message endpoint behavior (queueing a JSON-RPC request)
+describe("Worker /message endpoint", () => {
+	test("should accept POST and return ok response", async () => {
+		const workerMod: any = await import("./worker.js");
+		const worker = workerMod.default;
+		const env = {
+			DOC_SOURCES_JSON: JSON.stringify([
+				{ llms_txt: "https://example.com/llms.txt" },
+			]),
+		};
+
+		const rpcRequest = {
+			jsonrpc: "2.0",
+			id: 42,
+			method: "tools/list",
+			params: {},
+		};
+
+		const postResp = await worker.fetch(
+			new Request("http://localhost/message", {
+				method: "POST",
+				body: JSON.stringify(rpcRequest),
+				headers: { "Content-Type": "application/json" },
+			}),
+			env,
+		);
+		assert.strictEqual(postResp.status, 200);
+		const body = await postResp.json();
+		assert.deepStrictEqual(body, { ok: true });
+	});
+});
