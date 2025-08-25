@@ -31,13 +31,12 @@
 		"dev:watch": "tsc --watch",
 		"deploy": "wrangler deploy",
 		"fix": "prettier --write . && oxlint --fix --fix-suggestions --import-plugin",
-		"help": "echo '📦 MCP LLMS-TXT Documentation Server (Node.js/TypeScript)' && echo '' && echo 'Available commands:' && echo '' && echo '🔧 Development:' && echo '  npm run install:ci  Install dependencies with npm ci' && echo '  npm run build       Build TypeScript to JavaScript' && echo '  npm run clean       Clean build artifacts' && echo '  npm run dev         Build and run CLI in development mode' && echo '  npm run watch       Watch TypeScript files for changes' && echo '' && echo '🧪 Testing:' && echo '  npm test            Run all tests' && echo '  npm run test:watch  Run tests in watch mode' && echo '' && echo '🔍 Code Quality:' && echo '  npm run lint        Run TypeScript compiler checks' && echo '  npm run format      Show formatting information' && echo '' && echo '💡 Examples:' && echo '  npm run build && node dist/cli.js --help' && echo '  npm test'",
 		"start": "node dist/cli.js",
 		"test": "node --test dist/tests.js",
 		"test:watch": "node --test --watch dist/tests.js"
 	},
 	"dependencies": {
-		"@modelcontextprotocol/sdk": "1.17.3",
+		"@modelcontextprotocol/sdk": "1.17.4",
 		"turndown": "7.2.1"
 	},
 	"devDependencies": {
@@ -47,7 +46,7 @@
 		"oxlint": "1.12.0",
 		"prettier": "3.6.2",
 		"typescript": "5.9.2",
-		"wrangler": "4.31.0"
+		"wrangler": "4.32.0"
 	},
 	"prettier": {
 		"plugins": [
