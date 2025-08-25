@@ -37,6 +37,7 @@
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "1.17.4",
+		"@utcp/sdk": "0.1.1",
 		"turndown": "7.2.1"
 	},
 	"devDependencies": {

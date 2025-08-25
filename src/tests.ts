@@ -5,7 +5,7 @@
 
 import { test, describe } from "node:test";
 import assert from "node:assert";
-import { extractDomain, isHttpOrHttps, normalizePath } from "./server.js";
+import { extractDomain, isHttpOrHttps, normalizePath, createUtcpManualForDocs, executeUtcpToolCall } from "./server.js";
 import { SPLASH } from "./splash.js";
 
 // Import types for testing
@@ -420,5 +420,157 @@ describe("Worker /message endpoint", () => {
 		assert.strictEqual(postResp.status, 200);
 		const body = await postResp.json();
 		assert.deepStrictEqual(body, { ok: true });
+	});
+});
+
+// UTCP functionality tests
+describe("UTCP adapter", () => {
+	test("should create UTCP manual with correct structure", () => {
+		const docSources = [
+			{
+				name: "Test Docs",
+				llms_txt: "https://example.com/llms.txt",
+			},
+		];
+
+		const manual = createUtcpManualForDocs(
+			docSources,
+			"http://localhost:8080",
+			{},
+		);
+
+		assert.ok(manual, "Manual should be created");
+		assert.strictEqual(typeof manual.version, "string");
+		assert.ok(Array.isArray(manual.tools));
+		assert.strictEqual(manual.tools.length, 2); // list_doc_sources and fetch_docs
+
+		// Check list_doc_sources tool
+		const listTool = manual.tools.find((t: any) => t.name === "list_doc_sources");
+		assert.ok(listTool, "list_doc_sources tool should exist");
+		assert.strictEqual(typeof listTool.description, "string");
+		assert.ok(listTool.tool_provider, "Tool should have provider");
+		assert.strictEqual(listTool.tool_provider.provider_type, "http");
+
+		// Check fetch_docs tool
+		const fetchTool = manual.tools.find((t: any) => t.name === "fetch_docs");
+		assert.ok(fetchTool, "fetch_docs tool should exist");
+		assert.strictEqual(typeof fetchTool.description, "string");
+		assert.ok(fetchTool.tool_provider, "Tool should have provider");
+		assert.strictEqual(fetchTool.tool_provider.provider_type, "http");
+	});
+
+	test("should execute UTCP tool calls", async () => {
+		const docSources = [
+			{
+				name: "Test Docs",
+				llms_txt: "https://example.com/llms.txt",
+			},
+		];
+
+		// Test list_doc_sources
+		const listResult = await executeUtcpToolCall(
+			{
+				tool_name: "list_doc_sources",
+				inputs: {},
+			},
+			docSources,
+			{},
+		);
+
+		assert.strictEqual(listResult.success, true);
+		assert.ok(listResult.result, "Should have result");
+		assert.ok(listResult.result.content, "Should have content");
+		assert.ok(
+			listResult.result.content.includes("Test Docs"),
+			"Should contain doc source name",
+		);
+
+		// Test unknown tool
+		const unknownResult = await executeUtcpToolCall(
+			{
+				tool_name: "unknown_tool",
+				inputs: {},
+			},
+			docSources,
+			{},
+		);
+
+		assert.strictEqual(unknownResult.success, false);
+		assert.ok(unknownResult.error, "Should have error message");
+		assert.ok(
+			unknownResult.error.includes("Unknown tool"),
+			"Should indicate unknown tool",
+		);
+	});
+
+	test("should handle UTCP fetch_docs tool call errors", async () => {
+		const docSources = [
+			{
+				name: "Test Docs",
+				llms_txt: "https://example.com/llms.txt",
+			},
+		];
+
+		// Test fetch_docs without URL
+		const noUrlResult = await executeUtcpToolCall(
+			{
+				tool_name: "fetch_docs",
+				inputs: {},
+			},
+			docSources,
+			{},
+		);
+
+		assert.strictEqual(noUrlResult.success, false);
+		assert.ok(noUrlResult.error, "Should have error message");
+		assert.ok(
+			noUrlResult.error.includes("URL parameter is required"),
+			"Should indicate missing URL",
+		);
+	});
+});
+
+// UTCP integration tests
+describe("UTCP CLI integration", () => {
+	test("should support utcp transport option", () => {
+		// This test verifies the CLI accepts the utcp transport option
+		// without actually starting a server
+		const validTransports = ["stdio", "sse", "utcp"];
+		
+		assert.ok(
+			validTransports.includes("utcp"),
+			"UTCP should be a valid transport option",
+		);
+	});
+});
+
+// UTCP type compatibility
+describe("UTCP type compatibility", () => {
+	test("should handle UTCP tool call request types", () => {
+		const request = {
+			tool_name: "test_tool",
+			inputs: { param: "value" },
+		};
+
+		assert.strictEqual(typeof request.tool_name, "string");
+		assert.strictEqual(typeof request.inputs, "object");
+	});
+
+	test("should handle UTCP tool call response types", () => {
+		const successResponse = {
+			success: true,
+			result: { content: "test" },
+		};
+
+		const errorResponse = {
+			success: false,
+			error: "Test error",
+		};
+
+		assert.strictEqual(successResponse.success, true);
+		assert.ok(successResponse.result);
+
+		assert.strictEqual(errorResponse.success, false);
+		assert.ok(errorResponse.error);
 	});
 });

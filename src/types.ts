@@ -40,9 +40,22 @@ export interface CLIArgs {
 	followRedirects?: boolean;
 	allowedDomains?: string[];
 	timeout?: number;
-	transport?: "stdio" | "sse";
+	transport?: "stdio" | "sse" | "utcp";
 	logLevel?: string;
 	host?: string;
 	port?: number;
 	version?: boolean;
+}
+
+/**
+ * Server mode type
+ */
+export type ServerMode = "mcp" | "utcp" | "hybrid";
+
+/**
+ * Extended server settings with UTCP support
+ */
+export interface ExtendedServerSettings extends ServerSettings {
+	mode?: ServerMode;
+	utcpPath?: string;
 }

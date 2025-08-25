@@ -9,9 +9,9 @@ import { createServer as createHttpServer } from "node:http";
 import { parseArgs } from "node:util";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import { createServer } from "./server.js";
+import { createServer, createUtcpManualForDocs, executeUtcpToolCall } from "./server.js";
 import { SPLASH } from "./splash.js";
-import type { DocSource, ServerSettings } from "./types.js";
+import type { DocSource, ServerSettings, ExtendedServerSettings } from "./types.js";
 import pkg from "../package.json" with { type: "json" };
 
 const VERSION = pkg.version;
@@ -32,6 +32,9 @@ Examples:
 
 	# Using SSE transport with default host (127.0.0.1) and port (8000)
 	mcpdoc --config sample_config.json --transport sse
+  
+	# Using UTCP transport (Universal Tool Calling Protocol)
+	mcpdoc --config sample_config.json --transport utcp --host 0.0.0.0 --port 8080
   
 	# Using SSE transport with custom host and port
 	mcpdoc --config sample_config.json --transport sse --host 0.0.0.0 --port 9000
@@ -147,16 +150,16 @@ async function main(): Promise<void> {
 			"      --timeout <seconds>        HTTP request timeout in seconds (default: 10.0)",
 		);
 		console.log(
-			"      --transport <transport>    Transport protocol for MCP server (stdio|sse) (default: stdio)",
+			"      --transport <transport>    Transport protocol (stdio|sse|utcp) (default: stdio)",
 		);
 		console.log(
-			"      --log-level <level>        Log level for the server (SSE only) (default: INFO)",
+			"      --log-level <level>        Log level for the server (SSE/UTCP only) (default: INFO)",
 		);
 		console.log(
-			"      --host <host>              Host to bind the server (SSE only) (default: 127.0.0.1)",
+			"      --host <host>              Host to bind the server (SSE/UTCP only) (default: 127.0.0.1)",
 		);
 		console.log(
-			"      --port <port>              Port to bind the server (SSE only) (default: 8000)",
+			"      --port <port>              Port to bind the server (SSE/UTCP only) (default: 8000)",
 		);
 		console.log("      --version                 Show version");
 		console.log("      --help                    Show this help and exit");
@@ -199,8 +202,8 @@ async function main(): Promise<void> {
 	// Validate transport option
 	const transport =
 		typeof values.transport === "string" ? values.transport : "stdio";
-	if (!transport || !["stdio", "sse"].includes(transport)) {
-		console.error('Error: --transport must be either "stdio" or "sse"');
+	if (!transport || !["stdio", "sse", "utcp"].includes(transport)) {
+		console.error('Error: --transport must be either "stdio", "sse", or "utcp"');
 		process.exit(1);
 	}
 
@@ -270,6 +273,104 @@ async function main(): Promise<void> {
 		httpServer.listen(settings.port, settings.host, () => {
 			console.log(
 				`SSE server running on http://${settings.host}:${settings.port}/sse`,
+			);
+		});
+	} else if (transport === "utcp") {
+		console.log();
+		console.log(SPLASH);
+		console.log();
+		console.log(
+			`Launching MCPDOC server with UTCP protocol and ${docSources.length} doc sources`,
+		);
+
+		const baseUrl = `http://${settings.host}:${settings.port}`;
+
+		const httpServer = createHttpServer(async (req, res) => {
+			const url = new URL(req.url || "", `http://${req.headers.host}`);
+
+			// Enable CORS for UTCP
+			res.setHeader("Access-Control-Allow-Origin", "*");
+			res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+			res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+			if (req.method === "OPTIONS") {
+				res.writeHead(200);
+				res.end();
+				return;
+			}
+
+			if (url.pathname === "/utcp") {
+				// Serve UTCP manual
+				try {
+					const manual = createUtcpManualForDocs(docSources, baseUrl, {
+						allowedDomains,
+						followRedirects:
+							Boolean(values["follow-redirects"]) &&
+							values["follow-redirects"] !== "false",
+						timeout:
+							parseFloat(typeof values.timeout === "string" ? values.timeout : "10.0") *
+							1000,
+					});
+
+					res.writeHead(200, { "Content-Type": "application/json" });
+					res.end(JSON.stringify(manual, null, 2));
+				} catch (error) {
+					res.writeHead(500, { "Content-Type": "application/json" });
+					res.end(JSON.stringify({ 
+						error: `Failed to create UTCP manual: ${error instanceof Error ? error.message : String(error)}` 
+					}));
+				}
+			} else if (url.pathname.startsWith("/tools/")) {
+				// Handle tool execution
+				const toolName = url.pathname.split("/tools/")[1];
+
+				if (req.method !== "POST") {
+					res.writeHead(405, { "Content-Type": "application/json" });
+					res.end(JSON.stringify({ error: "Method not allowed" }));
+					return;
+				}
+
+				let body = "";
+				req.on("data", (chunk) => (body += chunk));
+				req.on("end", async () => {
+					try {
+						const inputs = body ? JSON.parse(body) : {};
+						const result = await executeUtcpToolCall(
+							{ tool_name: toolName, inputs },
+							docSources,
+							{
+								followRedirects:
+									Boolean(values["follow-redirects"]) &&
+									values["follow-redirects"] !== "false",
+								timeout:
+									parseFloat(typeof values.timeout === "string" ? values.timeout : "10.0") *
+									1000,
+								allowedDomains,
+							}
+						);
+
+						res.writeHead(200, { "Content-Type": "application/json" });
+						res.end(JSON.stringify(result));
+					} catch (error) {
+						res.writeHead(400, { "Content-Type": "application/json" });
+						res.end(JSON.stringify({ 
+							success: false, 
+							error: `Invalid request: ${error instanceof Error ? error.message : String(error)}` 
+						}));
+					}
+				});
+			} else {
+				res.writeHead(404, { "Content-Type": "application/json" });
+				res.end(JSON.stringify({ error: "Not Found" }));
+			}
+		});
+
+		httpServer.listen(settings.port, settings.host, () => {
+			console.log(
+				`UTCP server running on http://${settings.host}:${settings.port}/utcp`,
+			);
+			console.log(
+				`Tool endpoints available at http://${settings.host}:${settings.port}/tools/{tool_name}`,
 			);
 		});
 	} else {
