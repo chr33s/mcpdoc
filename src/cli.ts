@@ -11,9 +11,11 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import {
 	createServer,
+} from "./mcp.js";
+import {
 	createUtcpManualForDocs,
 	executeUtcpToolCall,
-} from "./server.js";
+} from "./utcp.js";
 import { SPLASH } from "./splash.js";
 import type { DocSource, ServerSettings } from "./types.js";
 import pkg from "../package.json" with { type: "json" };

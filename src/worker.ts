@@ -17,7 +17,7 @@
  * NOTE: Local filesystem doc sources are not supported in the Worker runtime.
  */
 
-import { createServer } from "./server.js";
+import { createServer } from "./mcp.js";
 import type { DocSource } from "./types.js";
 import type {
 	JSONRPCMessage,
