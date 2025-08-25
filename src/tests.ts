@@ -9,11 +9,9 @@ import {
 	extractDomain,
 	isHttpOrHttps,
 	normalizePath,
-} from "./server.js";
-import {
 	createUtcpManualForDocs,
 	executeUtcpToolCall,
-} from "./utcp.js";
+} from "./server.js";
 import { SPLASH } from "./splash.js";
 
 // Import types for testing
@@ -137,7 +135,7 @@ describe("SPLASH constant", () => {
 describe("Server creation (integration test)", async () => {
 	test("should create server with valid doc sources", async () => {
 		// Dynamic import to avoid top-level await
-		const { createServer } = await import("./mcp.js");
+		const { createServer } = await import("./server.js");
 
 		const docSources: DocSource[] = [
 			{
@@ -156,7 +154,7 @@ describe("Server creation (integration test)", async () => {
 
 	test("should reject invalid local files", async () => {
 		// Dynamic import to avoid top-level await
-		const { createServer } = await import("./mcp.js");
+		const { createServer } = await import("./server.js");
 
 		const docSources: DocSource[] = [
 			{
@@ -332,7 +330,7 @@ describe("Python to TypeScript migration compatibility", () => {
 
 	test("should replicate Python test_get_fetch_description behavior", async () => {
 		// This replicates the Python parametrized test for _get_fetch_description
-		const { createServer } = await import("./mcp.js");
+		const { createServer } = await import("./server.js");
 
 		// Test with local sources (has_local_sources=True)
 		const localDocSources: DocSource[] = [
