@@ -1,0 +1,8 @@
+[
+	{
+		"name": "mcpdoc_server",
+		"provider_type": "http",
+		"url": "http://localhost:8080/utcp",
+		"http_method": "GET"
+	}
+]

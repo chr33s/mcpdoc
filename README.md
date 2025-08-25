@@ -1,10 +1,15 @@
-# MCP LLMS-TXT Documentation Server
+# MCP LLMS-TXT Documentation Server with UTCP Support
 
 ## Overview
 
 [llms.txt](https://llmstxt.org/) is a website index for LLMs, providing background information, guidance, and links to detailed markdown files. IDEs like Cursor and Windsurf or apps like Claude Code/Desktop can use `llms.txt` to retrieve context for tasks. However, these apps use different built-in tools to read and process files like `llms.txt`. The retrieval process can be opaque, and there is not always a way to audit the tool calls or the context returned.
 
-[MCP](https://github.com/modelcontextprotocol) offers a way for developers to have _full control_ over tools used by these applications. Here, we create [an open source MCP server](https://github.com/modelcontextprotocol) to provide MCP host applications (e.g., Cursor, Windsurf, Claude Code/Desktop) with (1) a user-defined list of `llms.txt` files and (2) a simple `fetch_docs` tool read URLs within any of the provided `llms.txt` files. This allows the user to audit each tool call as well as the context returned.
+This project provides two ways to expose documentation tools:
+
+1. **[MCP (Model Context Protocol)](https://github.com/modelcontextprotocol)** - The original protocol for connecting LLM applications with external tools
+2. **[UTCP (Universal Tool Calling Protocol)](https://utcp.io)** - A modern, HTTP-based protocol for scalable tool integration
+
+Both protocols provide MCP/UTCP host applications (e.g., Cursor, Windsurf, Claude Code/Desktop) with (1) a user-defined list of `llms.txt` files and (2) a simple `fetch_docs` tool to read URLs within any of the provided `llms.txt` files. This allows the user to audit each tool call as well as the context returned.
 
 <img src="https://github.com/user-attachments/assets/736f8f55-833d-4200-b833-5fca01a09e1b" width="60%">
 
@@ -17,8 +22,26 @@ This project is built with **Node.js v22** and **TypeScript**, providing:
 - 🔧 **TypeScript**: Configured with `erasableSyntaxOnly` for clean compilation
 - 🧪 **Built-in Testing**: Using Node.js built-in test runner (no external dependencies)
 - 🔗 **MCP SDK**: Official Model Context Protocol SDK for robust integration
+- 🌐 **UTCP SDK**: Universal Tool Calling Protocol SDK for modern HTTP-based tool calling
 - 📝 **Commander.js**: Professional CLI argument parsing
 - 🌍 **Cross-Platform**: Works on Windows, macOS, and Linux
+
+### Protocol Support
+
+#### MCP (Model Context Protocol)
+
+- **Transport**: stdio, SSE (Server-Sent Events)
+- **Use Case**: Direct integration with MCP-compatible applications
+- **Benefits**: Established protocol with wide application support
+
+#### UTCP (Universal Tool Calling Protocol)
+
+- **Transport**: HTTP/REST API
+- **Use Case**: Modern web-based applications, microservices, scalable deployments
+- **Benefits**: HTTP-native, easily discoverable tools, better for distributed systems
+- **Endpoints**:
+  - `GET /utcp` - Tool discovery (UTCP manual)
+  - `POST /tools/{tool_name}` - Tool execution
 
 ### Migration from Python
 
@@ -105,6 +128,38 @@ mcpdoc \
 
 ```bash
 npx @modelcontextprotocol/inspector
+```
+
+#### (Optional) Test the UTCP server locally:
+
+```bash
+mcpdoc \
+    --urls "LangGraph:https://langchain-ai.github.io/langgraph/llms.txt" "LangChain:https://python.langchain.com/llms.txt" \
+    --transport utcp \
+    --port 8083 \
+    --host localhost \
+    --allowed-domains '*'
+```
+
+- This will start a UTCP server at: http://localhost:8083
+- Tool discovery endpoint: http://localhost:8083/utcp
+- Tool execution endpoints: http://localhost:8083/tools/{tool_name}
+
+Test the UTCP endpoints:
+
+```bash
+# Get available tools
+curl http://localhost:8083/utcp
+
+# List documentation sources
+curl -X POST http://localhost:8083/tools/list_doc_sources \
+     -H "Content-Type: application/json" \
+     -d '{}'
+
+# Fetch documentation
+curl -X POST http://localhost:8083/tools/fetch_docs \
+     -H "Content-Type: application/json" \
+     -d '{"url": "https://langchain-ai.github.io/langgraph/llms.txt"}'
 ```
 
 ![Screenshot 2025-03-18 at 3 30 30 PM](https://github.com/user-attachments/assets/14645d57-1b52-4a5e-abfe-8e7756772704)
@@ -408,6 +463,99 @@ const server = createServer(
 // Run the server
 server.run("stdio");
 ```
+
+## UTCP Integration
+
+### Using UTCP with TypeScript
+
+The UTCP mode provides a modern HTTP-based API for tool discovery and execution. This is ideal for web applications, microservices, and distributed systems.
+
+#### Starting a UTCP Server
+
+```bash
+# Start UTCP server with multiple documentation sources
+mcpdoc \
+    --transport utcp \
+    --config config.json \
+    --host 0.0.0.0 \
+    --port 8080 \
+    --allowed-domains '*'
+```
+
+#### UTCP Client Integration
+
+Use the UTCP client to discover and call tools:
+
+```typescript
+import { UtcpClient } from "@utcp/sdk";
+
+// Create UTCP client pointing to your mcpdoc server
+const client = await UtcpClient.create({
+  providers_file_path: "./providers.json", // or providers config
+});
+
+// Discover available tools
+const tools = await client.toolRepository.getTools();
+console.log(
+  "Available tools:",
+  tools.map((t) => t.name),
+);
+
+// Call list_doc_sources tool
+const docSources = await client.call_tool("list_doc_sources", {});
+console.log("Documentation sources:", docSources);
+
+// Fetch specific documentation
+const docs = await client.call_tool("fetch_docs", {
+  url: "https://langchain-ai.github.io/langgraph/llms.txt",
+});
+console.log("Fetched docs:", docs);
+```
+
+#### UTCP Providers Configuration
+
+Create a `providers.json` file to configure your UTCP client:
+
+```json
+[
+  {
+    "name": "mcpdoc_server",
+    "provider_type": "http",
+    "url": "http://localhost:8080/utcp",
+    "http_method": "GET"
+  }
+]
+```
+
+#### Direct HTTP API Usage
+
+You can also use the UTCP endpoints directly with any HTTP client:
+
+```javascript
+// Tool discovery
+const response = await fetch("http://localhost:8080/utcp");
+const tools = await response.json();
+
+// Tool execution
+const result = await fetch("http://localhost:8080/tools/list_doc_sources", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({}),
+});
+const data = await result.json();
+```
+
+### UTCP vs MCP Comparison
+
+| Feature          | MCP                              | UTCP                          |
+| ---------------- | -------------------------------- | ----------------------------- |
+| Transport        | stdio, SSE                       | HTTP/REST                     |
+| Discovery        | JSON-RPC calls                   | HTTP GET /utcp                |
+| Execution        | JSON-RPC calls                   | HTTP POST /tools/{name}       |
+| Client Libraries | MCP SDK                          | UTCP SDK                      |
+| Use Cases        | Desktop apps, direct integration | Web apps, microservices, APIs |
+| Scalability      | Single connection                | HTTP load balancing           |
+| Caching          | Limited                          | HTTP caching headers          |
 
 ## Development
 

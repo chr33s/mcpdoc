@@ -9,9 +9,13 @@ import { createServer as createHttpServer } from "node:http";
 import { parseArgs } from "node:util";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import { createServer, createUtcpManualForDocs, executeUtcpToolCall } from "./server.js";
+import {
+	createServer,
+	createUtcpManualForDocs,
+	executeUtcpToolCall,
+} from "./server.js";
 import { SPLASH } from "./splash.js";
-import type { DocSource, ServerSettings, ExtendedServerSettings } from "./types.js";
+import type { DocSource, ServerSettings } from "./types.js";
 import pkg from "../package.json" with { type: "json" };
 
 const VERSION = pkg.version;
@@ -203,7 +207,9 @@ async function main(): Promise<void> {
 	const transport =
 		typeof values.transport === "string" ? values.transport : "stdio";
 	if (!transport || !["stdio", "sse", "utcp"].includes(transport)) {
-		console.error('Error: --transport must be either "stdio", "sse", or "utcp"');
+		console.error(
+			'Error: --transport must be either "stdio", "sse", or "utcp"',
+		);
 		process.exit(1);
 	}
 
@@ -291,7 +297,10 @@ async function main(): Promise<void> {
 			// Enable CORS for UTCP
 			res.setHeader("Access-Control-Allow-Origin", "*");
 			res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-			res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+			res.setHeader(
+				"Access-Control-Allow-Headers",
+				"Content-Type, Authorization",
+			);
 
 			if (req.method === "OPTIONS") {
 				res.writeHead(200);
@@ -308,17 +317,20 @@ async function main(): Promise<void> {
 							Boolean(values["follow-redirects"]) &&
 							values["follow-redirects"] !== "false",
 						timeout:
-							parseFloat(typeof values.timeout === "string" ? values.timeout : "10.0") *
-							1000,
+							parseFloat(
+								typeof values.timeout === "string" ? values.timeout : "10.0",
+							) * 1000,
 					});
 
 					res.writeHead(200, { "Content-Type": "application/json" });
 					res.end(JSON.stringify(manual, null, 2));
 				} catch (error) {
 					res.writeHead(500, { "Content-Type": "application/json" });
-					res.end(JSON.stringify({ 
-						error: `Failed to create UTCP manual: ${error instanceof Error ? error.message : String(error)}` 
-					}));
+					res.end(
+						JSON.stringify({
+							error: `Failed to create UTCP manual: ${error instanceof Error ? error.message : String(error)}`,
+						}),
+					);
 				}
 			} else if (url.pathname.startsWith("/tools/")) {
 				// Handle tool execution
@@ -343,20 +355,25 @@ async function main(): Promise<void> {
 									Boolean(values["follow-redirects"]) &&
 									values["follow-redirects"] !== "false",
 								timeout:
-									parseFloat(typeof values.timeout === "string" ? values.timeout : "10.0") *
-									1000,
+									parseFloat(
+										typeof values.timeout === "string"
+											? values.timeout
+											: "10.0",
+									) * 1000,
 								allowedDomains,
-							}
+							},
 						);
 
 						res.writeHead(200, { "Content-Type": "application/json" });
 						res.end(JSON.stringify(result));
 					} catch (error) {
 						res.writeHead(400, { "Content-Type": "application/json" });
-						res.end(JSON.stringify({ 
-							success: false, 
-							error: `Invalid request: ${error instanceof Error ? error.message : String(error)}` 
-						}));
+						res.end(
+							JSON.stringify({
+								success: false,
+								error: `Invalid request: ${error instanceof Error ? error.message : String(error)}`,
+							}),
+						);
 					}
 				});
 			} else {

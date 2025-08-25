@@ -389,9 +389,9 @@ export async function createServer(
 
 /**
  * Create UTCP manual for the documentation tools
- * 
+ *
  * @param docSources List of documentation sources
- * @param baseUrl Base URL for tool endpoints  
+ * @param baseUrl Base URL for tool endpoints
  * @param options Server configuration options
  * @returns UTCP manual object
  */
@@ -409,7 +409,7 @@ export function createUtcpManualForDocs(
 
 /**
  * Execute MCP tool call and return UTCP-compatible response
- * 
+ *
  * @param request UTCP tool call request
  * @param docSources List of documentation sources
  * @param options Server configuration options
@@ -485,7 +485,11 @@ async function executeFetchDocs(
 		allowedDomains?: string[];
 	},
 ): Promise<string> {
-	const { followRedirects = false, timeout = 10000, allowedDomains = [] } = options;
+	const {
+		followRedirects = false,
+		timeout = 10000,
+		allowedDomains = [],
+	} = options;
 
 	// Separate local and remote sources
 	const localSources: DocSource[] = [];

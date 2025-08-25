@@ -4,8 +4,8 @@
  */
 
 import type { UtcpManual, Tool, HttpProvider } from "@utcp/sdk/dist/src/shared";
-import type { DocSource, ServerSettings } from "./types.js";
-import { extractDomain, isHttpOrHttps, normalizePath } from "./server.js";
+import type { DocSource } from "./types.js";
+import { isHttpOrHttps } from "./server.js";
 
 const UTCP_VERSION = "0.1.1";
 
@@ -15,11 +15,6 @@ const UTCP_VERSION = "0.1.1";
 export function createUtcpTools(
 	docSources: DocSource[],
 	baseUrl: string,
-	options: {
-		allowedDomains?: string[];
-		followRedirects?: boolean;
-		timeout?: number;
-	} = {},
 ): Tool[] {
 	const tools: Tool[] = [];
 
@@ -54,8 +49,10 @@ export function createUtcpTools(
 	});
 
 	// Create fetch_docs tool
-	const hasLocalSources = docSources.some((doc) => !isHttpOrHttps(doc.llms_txt));
-	
+	const hasLocalSources = docSources.some(
+		(doc) => !isHttpOrHttps(doc.llms_txt),
+	);
+
 	const fetchDescription = getFetchDescription(hasLocalSources);
 
 	tools.push({
@@ -100,13 +97,13 @@ export function createUtcpTools(
 export function createUtcpManual(
 	docSources: DocSource[],
 	baseUrl: string,
-	options: {
+	_options: {
 		allowedDomains?: string[];
 		followRedirects?: boolean;
 		timeout?: number;
 	} = {},
 ): UtcpManual {
-	const tools = createUtcpTools(docSources, baseUrl, options);
+	const tools = createUtcpTools(docSources, baseUrl);
 
 	return {
 		version: UTCP_VERSION,

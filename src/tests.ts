@@ -5,7 +5,13 @@
 
 import { test, describe } from "node:test";
 import assert from "node:assert";
-import { extractDomain, isHttpOrHttps, normalizePath, createUtcpManualForDocs, executeUtcpToolCall } from "./server.js";
+import {
+	extractDomain,
+	isHttpOrHttps,
+	normalizePath,
+	createUtcpManualForDocs,
+	executeUtcpToolCall,
+} from "./server.js";
 import { SPLASH } from "./splash.js";
 
 // Import types for testing
@@ -445,7 +451,9 @@ describe("UTCP adapter", () => {
 		assert.strictEqual(manual.tools.length, 2); // list_doc_sources and fetch_docs
 
 		// Check list_doc_sources tool
-		const listTool = manual.tools.find((t: any) => t.name === "list_doc_sources");
+		const listTool = manual.tools.find(
+			(t: any) => t.name === "list_doc_sources",
+		);
 		assert.ok(listTool, "list_doc_sources tool should exist");
 		assert.strictEqual(typeof listTool.description, "string");
 		assert.ok(listTool.tool_provider, "Tool should have provider");
@@ -536,7 +544,7 @@ describe("UTCP CLI integration", () => {
 		// This test verifies the CLI accepts the utcp transport option
 		// without actually starting a server
 		const validTransports = ["stdio", "sse", "utcp"];
-		
+
 		assert.ok(
 			validTransports.includes("utcp"),
 			"UTCP should be a valid transport option",
