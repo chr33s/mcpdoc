@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         working-directory: ${{ inputs.working-directory }}
         run: |
-          npm ci
+          npm install
 
       - name: Build TypeScript
         working-directory: ${{ inputs.working-directory }}
