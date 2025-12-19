@@ -1,6 +1,6 @@
 {
 	"name": "@chr33s/mcpdoc",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Server llms-txt documentation over MCP (Node.js/TypeScript)",
 	"license": "MIT",
 	"type": "module",
