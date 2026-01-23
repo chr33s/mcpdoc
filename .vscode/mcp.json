@@ -6,7 +6,7 @@
 			"command": "node"
 		},
 		"mcpdoc": {
-			"args": ["@chr33s/mcpdoc", "--urls", "Zod:https://zod.dev/llms.txt", "--transport", "sse"],
+			"args": ["@chr33s/mcpdoc", "--urls", "Zod:https://zod.dev/llms.txt", "--transport", "http"],
 			"command": "npx"
 		}
 	}
