@@ -11,8 +11,8 @@ import { SPLASH } from "./splash.js";
 // Import types for testing
 import type { DocSource } from "./types.js";
 
-describe("Import Tests", () => {
-	test("should be able to import main modules", () => {
+void describe("Import Tests", () => {
+	void test("should be able to import main modules", () => {
 		// Test that main modules can be imported without errors
 		// This is equivalent to the Python test_imports.py
 		assert.ok(extractDomain, "extractDomain function should be available");
@@ -22,44 +22,29 @@ describe("Import Tests", () => {
 	});
 });
 
-describe("extractDomain function", () => {
-	test("should extract domain from https URL", () => {
-		assert.strictEqual(
-			extractDomain("https://example.com/page"),
-			"https://example.com/",
-		);
+void describe("extractDomain function", () => {
+	void test("should extract domain from https URL", () => {
+		assert.strictEqual(extractDomain("https://example.com/page"), "https://example.com/");
 	});
 
-	test("should extract domain from http URL", () => {
-		assert.strictEqual(
-			extractDomain("http://test.org/docs/index.html"),
-			"http://test.org/",
-		);
+	void test("should extract domain from http URL", () => {
+		assert.strictEqual(extractDomain("http://test.org/docs/index.html"), "http://test.org/");
 	});
 
-	test("should extract domain with port", () => {
-		assert.strictEqual(
-			extractDomain("https://localhost:8080/api"),
-			"https://localhost:8080/",
-		);
+	void test("should extract domain with port", () => {
+		assert.strictEqual(extractDomain("https://localhost:8080/api"), "https://localhost:8080/");
 	});
 
-	test("should add trailing slash if missing", () => {
-		assert.strictEqual(
-			extractDomain("https://localhost:8080"),
-			"https://localhost:8080/",
-		);
+	void test("should add trailing slash if missing", () => {
+		assert.strictEqual(extractDomain("https://localhost:8080"), "https://localhost:8080/");
 	});
 
-	test("should extract domain with subdomain", () => {
-		assert.strictEqual(
-			extractDomain("https://docs.python.org/3/"),
-			"https://docs.python.org/",
-		);
+	void test("should extract domain with subdomain", () => {
+		assert.strictEqual(extractDomain("https://docs.python.org/3/"), "https://docs.python.org/");
 	});
 });
 
-describe("isHttpOrHttps function", () => {
+void describe("isHttpOrHttps function", () => {
 	const testCases = [
 		{ url: "http://example.com", expected: true },
 		{ url: "https://example.com", expected: true },
@@ -69,33 +54,33 @@ describe("isHttpOrHttps function", () => {
 	];
 
 	testCases.forEach(({ url, expected }) => {
-		test(`should return ${expected} for "${url}"`, () => {
+		void test(`should return ${expected} for "${url}"`, () => {
 			assert.strictEqual(isHttpOrHttps(url), expected);
 		});
 	});
 });
 
-describe("normalizePath function", () => {
-	test("should handle file:// URLs", () => {
+void describe("normalizePath function", () => {
+	void test("should handle file:// URLs", () => {
 		const result = normalizePath("file:///path/to/file.txt");
 		assert.ok(result.includes("file.txt"));
 		assert.ok(!result.startsWith("file://"));
 	});
 
-	test("should handle relative paths", () => {
+	void test("should handle relative paths", () => {
 		const result = normalizePath("./relative/path.txt");
 		assert.ok(result.includes("path.txt"));
 		assert.ok(!result.startsWith("./"));
 	});
 
-	test("should handle absolute paths", () => {
+	void test("should handle absolute paths", () => {
 		const result = normalizePath("/absolute/path.txt");
 		assert.strictEqual(result, "/absolute/path.txt");
 	});
 });
 
-describe("TypeScript interfaces", () => {
-	test("should create valid DocSource objects", () => {
+void describe("TypeScript interfaces", () => {
+	void test("should create valid DocSource objects", () => {
 		const docSource: DocSource = {
 			llms_txt: "https://example.com/llms.txt",
 		};
@@ -111,23 +96,20 @@ describe("TypeScript interfaces", () => {
 	});
 });
 
-describe("SPLASH constant", () => {
-	test("should contain ASCII art", () => {
+void describe("SPLASH constant", () => {
+	void test("should contain ASCII art", () => {
 		assert.ok(SPLASH.includes("███"), "Should contain ASCII art characters");
-		assert.ok(
-			SPLASH.includes("██║"),
-			"Should contain ASCII art border characters",
-		);
+		assert.ok(SPLASH.includes("██║"), "Should contain ASCII art border characters");
 	});
 
-	test("should be properly formatted", () => {
+	void test("should be properly formatted", () => {
 		const lines = SPLASH.split("\n");
 		assert.ok(lines.length > 1, "Should have multiple lines");
 	});
 });
 
-describe("Server creation (integration test)", async () => {
-	test("should create server with valid doc sources", async () => {
+void describe("Server creation (integration test)", async () => {
+	void test("should create server with valid doc sources", async () => {
 		// Dynamic import to avoid top-level await
 		const { createServer } = await import("./server.js");
 
@@ -146,7 +128,7 @@ describe("Server creation (integration test)", async () => {
 		assert.ok(server, "Server should be created successfully");
 	});
 
-	test("should reject invalid local files", async () => {
+	void test("should reject invalid local files", async () => {
 		// Dynamic import to avoid top-level await
 		const { createServer } = await import("./server.js");
 
@@ -167,8 +149,8 @@ describe("Server creation (integration test)", async () => {
 	});
 });
 
-describe("CLI argument parsing simulation", () => {
-	test("should handle URL parsing with name:url format", () => {
+void describe("CLI argument parsing simulation", () => {
+	void test("should handle URL parsing with name:url format", () => {
 		// This tests the URL parsing logic that was fixed during migration
 		const testUrls = [
 			"LangGraph:https://langchain-ai.github.io/langgraph/llms.txt",
@@ -181,8 +163,7 @@ describe("CLI argument parsing simulation", () => {
 		assert.ok(testUrls.every((url) => typeof url === "string"));
 
 		// Test the logic that should split name:url correctly
-		const testEntry =
-			"LangGraph:https://langchain-ai.github.io/langgraph/llms.txt";
+		const testEntry = "LangGraph:https://langchain-ai.github.io/langgraph/llms.txt";
 		const colonIndex = testEntry.indexOf(":");
 		const hasProperFormat =
 			colonIndex > 0 &&
@@ -196,17 +177,14 @@ describe("CLI argument parsing simulation", () => {
 			const name = testEntry.substring(0, colonIndex);
 			const url = testEntry.substring(colonIndex + 1);
 			assert.strictEqual(name, "LangGraph");
-			assert.strictEqual(
-				url,
-				"https://langchain-ai.github.io/langgraph/llms.txt",
-			);
+			assert.strictEqual(url, "https://langchain-ai.github.io/langgraph/llms.txt");
 		}
 	});
 });
 
 // Additional integration tests
-describe("Error handling", () => {
-	test("should handle invalid URLs gracefully", () => {
+void describe("Error handling", () => {
+	void test("should handle invalid URLs gracefully", () => {
 		assert.throws(() => {
 			new URL("invalid-url");
 		}, TypeError);
@@ -217,7 +195,7 @@ describe("Error handling", () => {
 		}, TypeError);
 	});
 
-	test("should handle empty inputs", () => {
+	void test("should handle empty inputs", () => {
 		assert.strictEqual(isHttpOrHttps(""), false);
 
 		assert.throws(() => {
@@ -226,8 +204,8 @@ describe("Error handling", () => {
 	});
 });
 
-describe("Configuration file format compatibility", () => {
-	test("should accept valid DocSource arrays", () => {
+void describe("Configuration file format compatibility", () => {
+	void test("should accept valid DocSource arrays", () => {
 		const jsonConfig: DocSource[] = [
 			{
 				name: "LangGraph Python",
@@ -239,8 +217,8 @@ describe("Configuration file format compatibility", () => {
 });
 
 // Performance and behavior tests
-describe("Utility function behavior", () => {
-	test("extractDomain should handle edge cases", () => {
+void describe("Utility function behavior", () => {
+	void test("extractDomain should handle edge cases", () => {
 		// Test with query parameters
 		assert.strictEqual(
 			extractDomain("https://example.com/path?query=value"),
@@ -248,10 +226,7 @@ describe("Utility function behavior", () => {
 		);
 
 		// Test with fragments
-		assert.strictEqual(
-			extractDomain("https://example.com/path#fragment"),
-			"https://example.com/",
-		);
+		assert.strictEqual(extractDomain("https://example.com/path#fragment"), "https://example.com/");
 
 		// Test with complex URLs
 		assert.strictEqual(
@@ -260,7 +235,7 @@ describe("Utility function behavior", () => {
 		);
 	});
 
-	test("isHttpOrHttps should be case insensitive for protocols", () => {
+	void test("isHttpOrHttps should be case insensitive for protocols", () => {
 		// The function should only check for lowercase http/https
 		assert.strictEqual(isHttpOrHttps("HTTP://example.com"), false);
 		assert.strictEqual(isHttpOrHttps("HTTPS://example.com"), false);
@@ -270,8 +245,8 @@ describe("Utility function behavior", () => {
 });
 
 // Migration compatibility tests
-describe("Python to TypeScript migration compatibility", () => {
-	test("should maintain same function signatures and behavior", () => {
+void describe("Python to TypeScript migration compatibility", () => {
+	void test("should maintain same function signatures and behavior", () => {
 		// These tests ensure the TypeScript version behaves identically to Python
 
 		// extractDomain behavior matches Python extract_domain
@@ -284,7 +259,7 @@ describe("Python to TypeScript migration compatibility", () => {
 		assert.strictEqual(isHttpOrHttps("/local/path"), false);
 	});
 
-	test("should handle the same edge cases as Python version", () => {
+	void test("should handle the same edge cases as Python version", () => {
 		// Domain extraction with various URL formats
 		const urls = [
 			"https://docs.python.org/3/",
@@ -294,15 +269,12 @@ describe("Python to TypeScript migration compatibility", () => {
 
 		urls.forEach((url) => {
 			const domain = extractDomain(url);
-			assert.ok(
-				domain.startsWith("http"),
-				`Domain should start with http: ${domain}`,
-			);
+			assert.ok(domain.startsWith("http"), `Domain should start with http: ${domain}`);
 			assert.ok(domain.endsWith("/"), `Domain should end with /: ${domain}`);
 		});
 	});
 
-	test("should support the same DocSource structure as Python", () => {
+	void test("should support the same DocSource structure as Python", () => {
 		// Test compatibility with Python's DocSource TypedDict
 		const pythonStyleConfig: DocSource[] = [
 			{
@@ -322,28 +294,21 @@ describe("Python to TypeScript migration compatibility", () => {
 		assert.ok(!pythonStyleConfig[1].name); // Should be undefined/falsy
 	});
 
-	test("should replicate Python test_get_fetch_description behavior", async () => {
+	void test("should replicate Python test_get_fetch_description behavior", async () => {
 		// This replicates the Python parametrized test for _get_fetch_description
 		const { createServer } = await import("./server.js");
 
 		// Test with local sources (has_local_sources=True)
-		const localDocSources: DocSource[] = [
-			{ llms_txt: "/path/to/local/file.txt" },
-		];
+		const localDocSources: DocSource[] = [{ llms_txt: "/path/to/local/file.txt" }];
 
 		// Test with remote sources (has_local_sources=False)
-		const remoteDocSources: DocSource[] = [
-			{ llms_txt: "https://example.com/llms.txt" },
-		];
+		const remoteDocSources: DocSource[] = [{ llms_txt: "https://example.com/llms.txt" }];
 
 		// We can't directly test the private _get_fetch_description function,
 		// but we can verify the server creates tools with appropriate descriptions
 		try {
 			// This should throw for local files that don't exist
-			await assert.rejects(
-				async () => await createServer(localDocSources),
-				/Local file not found/,
-			);
+			await assert.rejects(async () => await createServer(localDocSources), /Local file not found/);
 		} catch {
 			// Expected to fail since local file doesn't exist
 		}
@@ -357,34 +322,24 @@ describe("Python to TypeScript migration compatibility", () => {
 });
 
 // Lightweight test for Cloudflare Worker transport implementation
-describe("Worker transport", () => {
-	test("should establish SSE stream and return initial data", async () => {
+void describe("Worker transport", () => {
+	void test("should establish SSE stream and return initial data", async () => {
 		const workerMod: any = await import("./worker.js");
 		const worker = workerMod.default;
 		assert.ok(worker && typeof worker.fetch === "function");
 
 		const env = {
-			DOC_SOURCES_JSON: JSON.stringify([
-				{ llms_txt: "https://example.com/llms.txt" },
-			]),
+			DOC_SOURCES_JSON: JSON.stringify([{ llms_txt: "https://example.com/llms.txt" }]),
 		};
 
-		const sseResp = await worker.fetch(
-			new Request("http://localhost/sse"),
-			env,
-		);
-		assert.strictEqual(
-			sseResp.headers.get("content-type"),
-			"text/event-stream",
-		);
+		const sseResp = await worker.fetch(new Request("http://localhost/sse"), env);
+		assert.strictEqual(sseResp.headers.get("content-type"), "text/event-stream");
 		const reader = sseResp.body?.getReader();
 		assert.ok(reader);
 		const { value } = await reader.read();
 		if (value) {
 			const firstChunk =
-				value instanceof Uint8Array
-					? new TextDecoder().decode(value)
-					: String(value);
+				value instanceof Uint8Array ? new TextDecoder().decode(value) : String(value);
 			assert.ok(firstChunk.length > 0, "First SSE chunk should not be empty");
 		}
 		await reader.cancel();
@@ -392,14 +347,12 @@ describe("Worker transport", () => {
 });
 
 // Test the /message endpoint behavior (queueing a JSON-RPC request)
-describe("Worker /message endpoint", () => {
-	test("should accept POST and return ok response", async () => {
+void describe("Worker /message endpoint", () => {
+	void test("should accept POST and return ok response", async () => {
 		const workerMod: any = await import("./worker.js");
 		const worker = workerMod.default;
 		const env = {
-			DOC_SOURCES_JSON: JSON.stringify([
-				{ llms_txt: "https://example.com/llms.txt" },
-			]),
+			DOC_SOURCES_JSON: JSON.stringify([{ llms_txt: "https://example.com/llms.txt" }]),
 		};
 
 		const rpcRequest = {

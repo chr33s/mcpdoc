@@ -2,23 +2,11 @@
 	"inputs": [],
 	"servers": {
 		"mcpdoc:local": {
-			"args": [
-				"./dist/cli.js",
-				"--urls",
-				"Zod:https://zod.dev/llms.txt",
-				"--transport",
-				"stdio"
-			],
+			"args": ["./dist/cli.js", "--urls", "Zod:https://zod.dev/llms.txt", "--transport", "stdio"],
 			"command": "node"
 		},
 		"mcpdoc": {
-			"args": [
-				"@chr33s/mcpdoc",
-				"--urls",
-				"Zod:https://zod.dev/llms.txt",
-				"--transport",
-				"sse"
-			],
+			"args": ["@chr33s/mcpdoc", "--urls", "Zod:https://zod.dev/llms.txt", "--transport", "sse"],
 			"command": "npx"
 		}
 	}

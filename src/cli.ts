@@ -128,24 +128,18 @@ async function main(): Promise<void> {
 		console.log("Usage: mcpdoc [options]");
 		console.log();
 		console.log("Options:");
-		console.log(
-			"  -c, --config <file>          Path to JSON config file with doc sources",
-		);
+		console.log("  -c, --config <file>          Path to JSON config file with doc sources");
 		console.log(
 			"  -u, --urls <urls...>          List of llms.txt URLs or file paths with optional names",
 		);
-		console.log(
-			"                                 (format: 'url_or_path' or 'name:url_or_path')",
-		);
+		console.log("                                 (format: 'url_or_path' or 'name:url_or_path')");
 		console.log(
 			"      --follow-redirects         Whether to follow HTTP redirects (default: false)",
 		);
 		console.log(
 			"      --allowed-domains <domains...> Additional allowed domains. Use '*' to allow all",
 		);
-		console.log(
-			"      --timeout <seconds>        HTTP request timeout in seconds (default: 10.0)",
-		);
+		console.log("      --timeout <seconds>        HTTP request timeout in seconds (default: 10.0)");
 		console.log(
 			"      --transport <transport>    Transport protocol for MCP server (stdio|sse) (default: stdio)",
 		);
@@ -170,14 +164,11 @@ async function main(): Promise<void> {
 
 	// Merge env overrides (e.g., MCPDOC_TIMEOUT) if provided (prefer parseEnv values, fallback to process.env)
 	const timeoutSecondsEnv =
-		(process.env.MCPDOC_TIMEOUT as string | undefined) ??
-		process.env.MCPDOC_TIMEOUT;
+		(process.env.MCPDOC_TIMEOUT as string | undefined) ?? process.env.MCPDOC_TIMEOUT;
 	if (timeoutSecondsEnv && !values.timeout) values.timeout = timeoutSecondsEnv;
 
 	if (!values.config && !values.urls) {
-		console.error(
-			"Error: At least one source option (--config or --urls) is required",
-		);
+		console.error("Error: At least one source option (--config or --urls) is required");
 		process.exit(1);
 	}
 
@@ -197,8 +188,7 @@ async function main(): Promise<void> {
 	}
 
 	// Validate transport option
-	const transport =
-		typeof values.transport === "string" ? values.transport : "stdio";
+	const transport = typeof values.transport === "string" ? values.transport : "stdio";
 	if (!transport || !["stdio", "sse"].includes(transport)) {
 		console.error('Error: --transport must be either "stdio" or "sse"');
 		process.exit(1);
@@ -207,25 +197,16 @@ async function main(): Promise<void> {
 	const settings: ServerSettings = {
 		host: typeof values.host === "string" ? values.host : "127.0.0.1",
 		port: parseInt(typeof values.port === "string" ? values.port : "8000", 10),
-		log_level:
-			typeof values["log-level"] === "string"
-				? (values["log-level"] as string)
-				: "INFO",
+		log_level: typeof values["log-level"] === "string" ? (values["log-level"] as string) : "INFO",
 	};
 
 	const allowedDomains = Array.isArray(values["allowed-domains"])
-		? values["allowed-domains"].filter(
-				(d): d is string => typeof d === "string",
-			)
+		? values["allowed-domains"].filter((d): d is string => typeof d === "string")
 		: [];
 
 	const server = await createServer(docSources, {
-		followRedirects:
-			Boolean(values["follow-redirects"]) &&
-			values["follow-redirects"] !== "false",
-		timeout:
-			parseFloat(typeof values.timeout === "string" ? values.timeout : "10.0") *
-			1000,
+		followRedirects: Boolean(values["follow-redirects"]) && values["follow-redirects"] !== "false",
+		timeout: parseFloat(typeof values.timeout === "string" ? values.timeout : "10.0") * 1000,
 		settings,
 		allowedDomains,
 	});
@@ -234,9 +215,7 @@ async function main(): Promise<void> {
 		console.log();
 		console.log(SPLASH);
 		console.log();
-		console.log(
-			`Launching MCPDOC server with ${docSources.length} doc sources`,
-		);
+		console.log(`Launching MCPDOC server with ${docSources.length} doc sources`);
 
 		const httpServer = createHttpServer((req, res) => {
 			const url = new URL(req.url || "", `http://${req.headers.host}`);
@@ -244,8 +223,8 @@ async function main(): Promise<void> {
 			if (url.pathname === "/sse") {
 				// Handle SSE connection
 				const transportInstance = new SSEServerTransport("/message", res);
-				server.connect(transportInstance);
-				transportInstance.start();
+				void server.connect(transportInstance);
+				void transportInstance.start();
 			} else if (url.pathname === "/message") {
 				// Handle POST messages
 				let body = "";
@@ -268,9 +247,7 @@ async function main(): Promise<void> {
 		});
 
 		httpServer.listen(settings.port, settings.host, () => {
-			console.log(
-				`SSE server running on http://${settings.host}:${settings.port}/sse`,
-			);
+			console.log(`SSE server running on http://${settings.host}:${settings.port}/sse`);
 		});
 	} else {
 		const transportInstance = new StdioServerTransport();

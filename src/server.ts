@@ -6,10 +6,7 @@ import { promises as fs } from "node:fs";
 import { resolve } from "node:path";
 import { URL } from "node:url";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import {
-	CallToolRequestSchema,
-	ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import TurndownService from "turndown";
 import type { DocSource, ServerSettings } from "./types.js";
 
@@ -90,11 +87,7 @@ export async function createServer(
 		allowedDomains?: string[];
 	} = {},
 ): Promise<Server> {
-	const {
-		followRedirects = false,
-		timeout = 10000,
-		allowedDomains = [],
-	} = options;
+	const { followRedirects = false, timeout = 10000, allowedDomains = [] } = options;
 
 	const server = new Server(
 		{
@@ -133,9 +126,7 @@ export async function createServer(
 	}
 
 	// Parse the domain names in the llms.txt URLs
-	const domains = new Set(
-		remoteSources.map((entry) => extractDomain(entry.llms_txt)),
-	);
+	const domains = new Set(remoteSources.map((entry) => extractDomain(entry.llms_txt)));
 
 	// Add additional allowed domains if specified
 	if (allowedDomains.includes("*")) {
@@ -145,9 +136,7 @@ export async function createServer(
 		allowedDomains.forEach((domain) => domains.add(domain));
 	}
 
-	const allowedLocalFiles = new Set(
-		localSources.map((entry) => normalizePath(entry.llms_txt)),
-	);
+	const allowedLocalFiles = new Set(localSources.map((entry) => normalizePath(entry.llms_txt)));
 
 	server.setRequestHandler(ListToolsRequestSchema, async () => {
 		return {
@@ -257,10 +246,7 @@ export async function createServer(
 			}
 
 			// Handle HTTP/HTTPS URLs
-			if (
-				!domains.has("*") &&
-				!Array.from(domains).some((domain) => url.startsWith(domain))
-			) {
+			if (!domains.has("*") && !Array.from(domains).some((domain) => url.startsWith(domain))) {
 				return {
 					content: [
 						{
@@ -306,9 +292,7 @@ export async function createServer(
 
 						if (
 							!domains.has("*") &&
-							!Array.from(domains).some((domain) =>
-								redirectUrl.startsWith(domain),
-							)
+							!Array.from(domains).some((domain) => redirectUrl.startsWith(domain))
 						) {
 							return {
 								content: [
@@ -321,10 +305,7 @@ export async function createServer(
 						}
 
 						const redirectController = new AbortController();
-						const redirectTimeoutId = setTimeout(
-							() => redirectController.abort(),
-							timeout,
-						);
+						const redirectTimeoutId = setTimeout(() => redirectController.abort(), timeout);
 
 						const redirectResponse = await fetch(redirectUrl, {
 							signal: redirectController.signal,

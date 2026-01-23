@@ -1,56 +1,52 @@
 {
 	"name": "@chr33s/mcpdoc",
-	"version": "0.1.2",
+	"version": "0.2.0",
 	"description": "Server llms-txt documentation over MCP (Node.js/TypeScript)",
-	"license": "MIT",
-	"type": "module",
-	"files": [
-		"dist",
-		"README.md"
+	"keywords": [
+		"mcpdoc"
 	],
+	"license": "MIT",
 	"author": "chr33s",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/chr33s/mcpdoc.git"
 	},
-	"keywords": [
-		"mcpdoc"
-	],
-	"engines": {
-		"node": ">=22.18.0"
-	},
 	"bin": {
 		"mcpdoc": "dist/cli.js"
 	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"type": "module",
 	"scripts": {
 		"build": "tsc",
-		"check": "tsc --noEmit --strict && prettier --check . && oxlint --import-plugin",
+		"check": "tsc --noEmit --strict && oxfmt --check . && oxlint --import-plugin --type-aware .",
 		"clean": "rm -rf dist",
 		"dev": "npm run dev:watch & node --watch dist/cli.js",
 		"dev:worker": "wrangler dev",
 		"dev:watch": "tsc --watch",
 		"deploy": "wrangler deploy",
-		"fix": "prettier --write . && oxlint --fix --fix-suggestions --import-plugin",
+		"fix": "oxfmt --write . && oxlint --fix --fix-suggestions --import-plugin --type-aware .",
 		"start": "node dist/cli.js",
 		"test": "node --test dist/tests.js",
 		"test:watch": "node --test --watch dist/tests.js"
 	},
 	"dependencies": {
-		"@modelcontextprotocol/sdk": "1.25.1",
+		"@modelcontextprotocol/sdk": "1.25.3",
 		"turndown": "7.2.2"
 	},
 	"devDependencies": {
 		"@prettier/plugin-oxc": "0.1.3",
-		"@types/node": "25.0.3",
+		"@types/node": "25.0.10",
 		"@types/turndown": "5.0.6",
-		"oxlint": "1.34.0",
-		"prettier": "3.7.4",
+		"oxfmt": "0.26.0",
+		"oxlint": "1.41.0",
+		"oxlint-tsgolint": "0.11.1",
 		"typescript": "5.9.3",
-		"wrangler": "4.56.0"
+		"wrangler": "4.60.0"
 	},
-	"prettier": {
-		"plugins": [
-			"@prettier/plugin-oxc"
-		]
+	"engines": {
+		"node": ">=22.18.0"
 	}
 }

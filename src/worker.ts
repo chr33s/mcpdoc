@@ -19,10 +19,7 @@
 
 import { createServer } from "./server.js";
 import type { DocSource } from "./types.js";
-import type {
-	JSONRPCMessage,
-	MessageExtraInfo,
-} from "@modelcontextprotocol/sdk/types.js";
+import type { JSONRPCMessage, MessageExtraInfo } from "@modelcontextprotocol/sdk/types.js";
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 
 // Simple Transport interface subset (avoid importing node-specific transport base)
@@ -97,8 +94,7 @@ async function getServer(env: Env) {
 
 		// Filter out any non-http(s) sources (no local file system in Workers)
 		docSources = docSources.filter(
-			(s) =>
-				s.llms_txt.startsWith("http://") || s.llms_txt.startsWith("https://"),
+			(s) => s.llms_txt.startsWith("http://") || s.llms_txt.startsWith("https://"),
 		);
 
 		const allowedDomains = env.ALLOWED_DOMAINS
@@ -130,13 +126,13 @@ export default {
 				start: (controller) => {
 					const transport = new WorkerSSETransport("/message");
 					transport.start(controller);
-					server.connect(transport as any); // SDK expects Transport; our subset matches usage
+					void server.connect(transport as any); // SDK expects Transport; our subset matches usage
 
 					while (pendingMessages.length) {
 						const raw = pendingMessages.shift();
 						if (!raw) continue;
 						try {
-							transport.handleMessage(JSON.parse(raw));
+							void transport.handleMessage(JSON.parse(raw));
 						} catch (e) {
 							console.error("Invalid queued message", e);
 						}
