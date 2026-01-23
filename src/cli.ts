@@ -3,12 +3,13 @@
  * Command-line interface for MCP LLMS-TXT Documentation Server
  */
 
+import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createServer as createHttpServer } from "node:http";
 import { parseArgs } from "node:util";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createServer } from "./server.js";
 import { SPLASH } from "./splash.js";
 import type { DocSource, ServerSettings } from "./types.js";
@@ -216,36 +217,40 @@ async function main(): Promise<void> {
 		console.log();
 		console.log(`Launching MCPDOC server with ${docSources.length} doc sources`);
 
-		// Store active SSE transport instances by session ID
-		const transports = new Map<string, SSEServerTransport>();
+		// Store active transport instances by session ID
+		const transports = new Map<string, StreamableHTTPServerTransport>();
 
-		const httpServer = createHttpServer((req, res) => {
+		const httpServer = createHttpServer(async (req, res) => {
 			const url = new URL(req.url || "", `http://${req.headers.host}`);
+			const sessionId = req.headers["mcp-session-id"] as string | undefined;
 
-			if (url.pathname === "/sse") {
-				// Handle SSE connection
-				const transportInstance = new SSEServerTransport("/message", res);
-				transports.set(transportInstance.sessionId, transportInstance);
-
-				// Clean up on close
-				res.on("close", () => {
-					transports.delete(transportInstance.sessionId);
-				});
-
-				void server.connect(transportInstance);
-				void transportInstance.start();
-			} else if (url.pathname === "/message") {
-				// Handle POST messages - forward to the correct transport
-				const sessionId = url.searchParams.get("sessionId");
-				const transportInstance = sessionId ? transports.get(sessionId) : undefined;
-
-				if (!transportInstance) {
-					res.writeHead(400, { "Content-Type": "application/json" });
-					res.end(JSON.stringify({ error: "Invalid or missing sessionId" }));
+			// Handle all MCP requests on /mcp endpoint
+			if (url.pathname === "/mcp") {
+				// Check for existing session
+				if (sessionId && transports.has(sessionId)) {
+					const transportInstance = transports.get(sessionId)!;
+					await transportInstance.handleRequest(req, res);
 					return;
 				}
 
-				void transportInstance.handlePostMessage(req, res);
+				// New session - create transport
+				const transportInstance = new StreamableHTTPServerTransport({
+					sessionIdGenerator: () => randomUUID(),
+					onsessioninitialized: (newSessionId) => {
+						transports.set(newSessionId, transportInstance);
+					},
+				});
+
+				// Clean up on close
+				transportInstance.onclose = () => {
+					const sid = transportInstance.sessionId;
+					if (sid) {
+						transports.delete(sid);
+					}
+				};
+
+				await server.connect(transportInstance);
+				await transportInstance.handleRequest(req, res);
 			} else {
 				res.writeHead(404);
 				res.end("Not Found");
@@ -253,7 +258,7 @@ async function main(): Promise<void> {
 		});
 
 		httpServer.listen(settings.port, settings.host, () => {
-			console.log(`SSE server running on http://${settings.host}:${settings.port}/sse`);
+			console.log(`Streamable HTTP server running on http://${settings.host}:${settings.port}/mcp`);
 		});
 	} else {
 		const transportInstance = new StdioServerTransport();
@@ -274,6 +279,7 @@ process.on("unhandledRejection", (reason) => {
 
 // Run the CLI
 if (import.meta.url === `file://${process.argv[1]}`) {
+	console.log("running cli")
 	main().catch((error) => {
 		console.error("Error:", error);
 		process.exit(1);

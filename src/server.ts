@@ -5,9 +5,9 @@
 import { promises as fs } from "node:fs";
 import { resolve } from "node:path";
 import { URL } from "node:url";
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import TurndownService from "turndown";
+import { z } from "zod";
 import type { DocSource, ServerSettings } from "./types.js";
 
 /**
@@ -86,10 +86,10 @@ export async function createServer(
 		settings?: ServerSettings;
 		allowedDomains?: string[];
 	} = {},
-): Promise<Server> {
+): Promise<McpServer> {
 	const { followRedirects = false, timeout = 10000, allowedDomains = [] } = options;
 
-	const server = new Server(
+	const mcpServer = new McpServer(
 		{
 			name: "llms-txt",
 			version: "1.0.0",
@@ -138,41 +138,14 @@ export async function createServer(
 
 	const allowedLocalFiles = new Set(localSources.map((entry) => normalizePath(entry.llms_txt)));
 
-	server.setRequestHandler(ListToolsRequestSchema, async () => {
-		return {
-			tools: [
-				{
-					name: "list_doc_sources",
-					description:
-						"List all available documentation sources.\n\nThis is the first tool you should call in the documentation workflow.\nIt provides URLs to llms.txt files or local file paths that the user has made available.\n\nReturns:\n    A string containing a formatted list of documentation sources with their URLs or file paths",
-					inputSchema: {
-						type: "object",
-						properties: {},
-						required: [],
-					},
-				},
-				{
-					name: "fetch_docs",
-					description: getFetchDescription(localSources.length > 0),
-					inputSchema: {
-						type: "object",
-						properties: {
-							url: {
-								type: "string",
-								description: "The URL or file path to fetch documentation from",
-							},
-						},
-						required: ["url"],
-					},
-				},
-			],
-		};
-	});
-
-	server.setRequestHandler(CallToolRequestSchema, async (request) => {
-		const { name, arguments: args } = request.params;
-
-		if (name === "list_doc_sources") {
+	// Register the list_doc_sources tool
+	mcpServer.registerTool(
+		"list_doc_sources",
+		{
+			description:
+				"List all available documentation sources.\n\nThis is the first tool you should call in the documentation workflow.\nIt provides URLs to llms.txt files or local file paths that the user has made available.\n\nReturns:\n    A string containing a formatted list of documentation sources with their URLs or file paths",
+		},
+		async () => {
 			let content = "";
 			for (const entry of docSources) {
 				const urlOrPath = entry.llms_txt;
@@ -194,10 +167,20 @@ export async function createServer(
 					},
 				],
 			};
-		}
+		},
+	);
 
-		if (name === "fetch_docs") {
-			const url = (args as { url: string }).url?.trim();
+	// Register the fetch_docs tool
+	mcpServer.registerTool(
+		"fetch_docs",
+		{
+			description: getFetchDescription(localSources.length > 0),
+			inputSchema: {
+				url: z.string().describe("The URL or file path to fetch documentation from"),
+			},
+		},
+		async (args) => {
+			const url = args.url?.trim();
 			if (!url) {
 				return {
 					content: [
@@ -351,17 +334,8 @@ export async function createServer(
 					],
 				};
 			}
-		}
+		},
+	);
 
-		return {
-			content: [
-				{
-					type: "text",
-					text: `Unknown tool: ${name}`,
-				},
-			],
-		};
-	});
-
-	return server;
+	return mcpServer;
 }

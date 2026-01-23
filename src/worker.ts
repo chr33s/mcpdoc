@@ -20,7 +20,7 @@
 import { createServer } from "./server.js";
 import type { DocSource } from "./types.js";
 import type { JSONRPCMessage, MessageExtraInfo } from "@modelcontextprotocol/sdk/types.js";
-import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 
 /**
@@ -80,7 +80,7 @@ interface Env {
 }
 
 // Create (or memoize) the MCP server instance per Worker isolate
-let serverPromise: Promise<Server> | null = null;
+let serverPromise: Promise<McpServer> | null = null;
 async function getServer(env: Env) {
 	if (!serverPromise) {
 		let docSources: DocSource[] = [];
@@ -126,7 +126,7 @@ export default {
 				start: (controller) => {
 					const transport = new WorkerSSETransport();
 					transport.setStreamController(controller);
-					void server.connect(transport);
+					void server.server.connect(transport);
 
 					while (pendingMessages.length) {
 						const raw = pendingMessages.shift();

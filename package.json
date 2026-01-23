@@ -1,6 +1,6 @@
 {
 	"name": "@chr33s/mcpdoc",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "Server llms-txt documentation over MCP (Node.js/TypeScript)",
 	"keywords": [
 		"mcpdoc"
@@ -33,7 +33,8 @@
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "1.25.3",
-		"turndown": "7.2.2"
+		"turndown": "7.2.2",
+		"zod": "4.3.6"
 	},
 	"devDependencies": {
 		"@prettier/plugin-oxc": "0.1.3",
