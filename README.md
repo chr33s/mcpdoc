@@ -381,6 +381,50 @@ Each source must include an `llms_txt` URL and can optionally include a `name`:
 ]
 ```
 
+### VSCode Config
+
+```json
+{
+  "mcpServers": {
+    "mcpdoc": {
+      "command": "mcpdoc",
+      "args": [
+        "--config",
+        "${workspaceFolder}/.mcpdoc.json",
+        "--transport",
+        "stdio",
+        "--follow-redirects",
+        "--timeout",
+        "15"
+      ]
+    }
+  }
+}
+```
+
+```json
+{
+  "mcpServers": {
+    "mcpdoc": {
+      "command": "mcpdoc",
+      "args": [
+        "--urls",
+        "LangGraph:https://langchain-ai.github.io/langgraph/llms.txt",
+        "LangChain:https://python.langchain.com/llms.txt",
+        "--transport",
+        "stdio",
+        "--follow-redirects",
+        "--timeout",
+        "15",
+        "--allowed-domains",
+        "langchain-ai.github.io",
+        "python.langchain.com"
+      ]
+    }
+  }
+}
+```
+
 ## Programmatic Usage
 
 ```typescript
