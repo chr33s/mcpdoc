@@ -306,12 +306,8 @@ void describe("Python to TypeScript migration compatibility", () => {
 
 		// We can't directly test the private _get_fetch_description function,
 		// but we can verify the server creates tools with appropriate descriptions
-		try {
-			// This should throw for local files that don't exist
-			await assert.rejects(async () => await createServer(localDocSources), /Local file not found/);
-		} catch {
-			// Expected to fail since local file doesn't exist
-		}
+		// This should throw for local files that don't exist
+		await assert.rejects(async () => await createServer(localDocSources), /Local file not found/);
 
 		// Remote sources should work
 		const remoteServer = await createServer(remoteDocSources, {

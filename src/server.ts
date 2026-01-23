@@ -225,11 +225,13 @@ export async function createServer(
 
 				try {
 					const content = await fs.readFile(absPath, "utf-8");
+					// Only apply HTML-to-Markdown conversion for HTML files
+					const isHtml = absPath.endsWith(".html") || absPath.endsWith(".htm");
 					return {
 						content: [
 							{
 								type: "text",
-								text: turndownService.turndown(content),
+								text: isHtml ? turndownService.turndown(content) : content,
 							},
 						],
 					};
@@ -280,9 +282,11 @@ export async function createServer(
 				}
 
 				let content = await response.text();
+				const contentType = response.headers.get("content-type") || "";
+				const isHtmlResponse = contentType.includes("text/html");
 
 				// Check for meta refresh redirect if redirects are enabled
-				if (followRedirects) {
+				if (followRedirects && isHtmlResponse) {
 					const metaRefreshMatch = content.match(
 						/<meta\s+http-equiv=["']?refresh["']?\s+content=["'][^;]+;\s*url=([^"']+)["']/i,
 					);
@@ -328,11 +332,12 @@ export async function createServer(
 					}
 				}
 
+				// Only apply HTML-to-Markdown conversion for HTML responses
 				return {
 					content: [
 						{
 							type: "text",
-							text: turndownService.turndown(content),
+							text: isHtmlResponse ? turndownService.turndown(content) : content,
 						},
 					],
 				};

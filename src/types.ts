@@ -30,19 +30,3 @@ export interface ServerSettings {
 	port?: number;
 	log_level?: string;
 }
-
-/**
- * CLI arguments interface
- */
-export interface CLIArgs {
-	config?: string;
-	urls?: string[];
-	followRedirects?: boolean;
-	allowedDomains?: string[];
-	timeout?: number;
-	transport?: "stdio" | "sse";
-	logLevel?: string;
-	host?: string;
-	port?: number;
-	version?: boolean;
-}

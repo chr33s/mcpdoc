@@ -21,40 +21,40 @@ import { createServer } from "./server.js";
 import type { DocSource } from "./types.js";
 import type { JSONRPCMessage, MessageExtraInfo } from "@modelcontextprotocol/sdk/types.js";
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 
-// Simple Transport interface subset (avoid importing node-specific transport base)
-interface TransportLike {
-	onclose?: () => void;
-	onerror?: (error: Error) => void;
-	onmessage?: (message: JSONRPCMessage, extra?: MessageExtraInfo) => void;
-	close(): Promise<void>;
-	send(message: JSONRPCMessage): Promise<void>;
-}
-
-// Minimal in-memory transport adapter for Cloudflare Workers.
-// We simulate the two-channel (SSE + POST) pattern used in the reference repo.
-class WorkerSSETransport implements TransportLike {
+/**
+ * Minimal in-memory transport adapter for Cloudflare Workers.
+ * Implements the MCP Transport interface for SSE communication.
+ * We simulate the two-channel (SSE + POST) pattern used in the reference repo.
+ *
+ * Note: The server instance is memoized per Worker isolate. Configuration changes
+ * via environment variables require a new deployment or isolate restart to take effect.
+ */
+class WorkerSSETransport implements Transport {
 	private controller: ReadableStreamDefaultController<string> | null = null;
+	private streamController: ReadableStreamDefaultController<string> | null = null;
 	onclose?: () => void;
 	onerror?: (error: Error) => void;
 	onmessage?: (message: JSONRPCMessage, extra?: MessageExtraInfo) => void;
 
-	private endpoint: string;
-	constructor(endpoint: string) {
-		this.endpoint = endpoint;
-	}
-
-	start(controller: ReadableStreamDefaultController<string>) {
+	setStreamController(controller: ReadableStreamDefaultController<string>) {
+		this.streamController = controller;
 		this.controller = controller;
 		// Send an initial comment to open the stream
 		this.enqueueRaw(": ok\n\n");
+	}
+
+	async start(): Promise<void> {
+		// Stream controller is set via setStreamController before connect()
+		// This method satisfies the Transport interface
 	}
 
 	private enqueueRaw(chunk: string) {
 		this.controller?.enqueue(chunk);
 	}
 
-	async handleMessage(message: unknown, extra?: MessageExtraInfo) {
+	handleMessage(message: unknown, extra?: MessageExtraInfo) {
 		if (typeof message === "object" && message !== null) {
 			this.onmessage?.(message as JSONRPCMessage, extra);
 		}
@@ -124,15 +124,15 @@ export default {
 
 			const stream = new ReadableStream<string>({
 				start: (controller) => {
-					const transport = new WorkerSSETransport("/message");
-					transport.start(controller);
-					void server.connect(transport as any); // SDK expects Transport; our subset matches usage
+					const transport = new WorkerSSETransport();
+					transport.setStreamController(controller);
+					void server.connect(transport);
 
 					while (pendingMessages.length) {
 						const raw = pendingMessages.shift();
 						if (!raw) continue;
 						try {
-							void transport.handleMessage(JSON.parse(raw));
+							transport.handleMessage(JSON.parse(raw));
 						} catch (e) {
 							console.error("Invalid queued message", e);
 						}

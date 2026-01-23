@@ -162,9 +162,8 @@ async function main(): Promise<void> {
 		return;
 	}
 
-	// Merge env overrides (e.g., MCPDOC_TIMEOUT) if provided (prefer parseEnv values, fallback to process.env)
-	const timeoutSecondsEnv =
-		(process.env.MCPDOC_TIMEOUT as string | undefined) ?? process.env.MCPDOC_TIMEOUT;
+	// Merge env overrides (e.g., MCPDOC_TIMEOUT) if provided
+	const timeoutSecondsEnv = process.env.MCPDOC_TIMEOUT;
 	if (timeoutSecondsEnv && !values.timeout) values.timeout = timeoutSecondsEnv;
 
 	if (!values.config && !values.urls) {
@@ -217,29 +216,36 @@ async function main(): Promise<void> {
 		console.log();
 		console.log(`Launching MCPDOC server with ${docSources.length} doc sources`);
 
+		// Store active SSE transport instances by session ID
+		const transports = new Map<string, SSEServerTransport>();
+
 		const httpServer = createHttpServer((req, res) => {
 			const url = new URL(req.url || "", `http://${req.headers.host}`);
 
 			if (url.pathname === "/sse") {
 				// Handle SSE connection
 				const transportInstance = new SSEServerTransport("/message", res);
+				transports.set(transportInstance.sessionId, transportInstance);
+
+				// Clean up on close
+				res.on("close", () => {
+					transports.delete(transportInstance.sessionId);
+				});
+
 				void server.connect(transportInstance);
 				void transportInstance.start();
 			} else if (url.pathname === "/message") {
-				// Handle POST messages
-				let body = "";
-				req.on("data", (chunk) => (body += chunk));
-				req.on("end", () => {
-					try {
-						JSON.parse(body);
-						// Handle the message - this would normally be done by the transport
-						res.writeHead(200, { "Content-Type": "application/json" });
-						res.end(JSON.stringify({ success: true }));
-					} catch {
-						res.writeHead(400, { "Content-Type": "application/json" });
-						res.end(JSON.stringify({ error: "Invalid JSON" }));
-					}
-				});
+				// Handle POST messages - forward to the correct transport
+				const sessionId = url.searchParams.get("sessionId");
+				const transportInstance = sessionId ? transports.get(sessionId) : undefined;
+
+				if (!transportInstance) {
+					res.writeHead(400, { "Content-Type": "application/json" });
+					res.end(JSON.stringify({ error: "Invalid or missing sessionId" }));
+					return;
+				}
+
+				void transportInstance.handlePostMessage(req, res);
 			} else {
 				res.writeHead(404);
 				res.end("Not Found");

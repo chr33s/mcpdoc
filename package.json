@@ -29,8 +29,7 @@
 		"deploy": "wrangler deploy",
 		"fix": "oxfmt --write . && oxlint --fix --fix-suggestions --import-plugin --type-aware .",
 		"start": "node dist/cli.js",
-		"test": "node --test dist/tests.js",
-		"test:watch": "node --test --watch dist/tests.js"
+		"test": "node --test dist/tests.js"
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "1.25.3",
