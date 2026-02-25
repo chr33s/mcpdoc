@@ -9,7 +9,7 @@
 	"author": "chr33s",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/chr33s/mcpdoc.git"
+		"url": "https://github.com/chr33s/mcpdoc"
 	},
 	"bin": {
 		"mcpdoc": "dist/cli.js"

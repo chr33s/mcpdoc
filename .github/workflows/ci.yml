@@ -1,55 +1,141 @@
----
-name: Run CI Tests
+name: CI
 
-on:
-  push:
-    branches: [main]
-  pull_request:
-  workflow_dispatch: # Allows to trigger the workflow manually in GitHub UI
+permissions:
+  contents: read
+  id-token: write
 
-# If another push to the same PR or branch happens while this workflow is still running,
-# cancel the earlier run in favor of the next run.
-#
-# There's no point in testing an outdated version of the code. GitHub only allows
-# a limited number of job runners to be active at the same time, so it's better to cancel
-# pointless jobs early so that more useful jobs can run sooner.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+on:
+  push:
+    branches: [main]
+    tags: [v*]
+  release:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Job to run"
+        required: false
+        type: choice
+        default: all
+        options:
+          - all
+          - build
+          - release
+          - publish
+
 jobs:
-  lint:
-    strategy:
-      matrix:
-        # Only lint on the LTS and latest Node.js versions.
-        # It's extremely unlikely that there's a lint issue on any version in between
-        # that doesn't show up on the LTS or latest versions.
-        #
-        # GitHub rate-limits how many jobs can be running at any one time.
-        # Starting new jobs is also relatively slow,
-        # so linting on fewer versions makes CI faster.
-        node-version:
-          - "22"
-    uses: ./.github/workflows/_lint.yml
-    with:
-      working-directory: .
-      node-version: ${{ matrix.node-version }}
-    secrets: inherit
-  test:
-    strategy:
-      matrix:
-        # Test on LTS and latest Node.js versions.
-        # It's extremely unlikely that there's a test issue on any version in between
-        # that doesn't show up on the LTS or latest versions.
-        #
-        # GitHub rate-limits how many jobs can be running at any one time.
-        # Starting new jobs is also relatively slow,
-        # so testing on fewer versions makes CI faster.
-        node-version:
-          - "22"
-          - "latest"
-    uses: ./.github/workflows/_test.yml
-    with:
-      working-directory: .
-      node-version: ${{ matrix.node-version }}
-    secrets: inherit
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+      - uses: actions/setup-node@v6
+        with:
+          cache: "npm"
+          node-version-file: "package.json"
+      - run: npm install && npm install --prefix=./spec
+      - run: npm run check
+      - run: npm run build --workspaces --if-present --prefix=./spec
+      - run: npm run test
+      - shell: bash
+        run: |
+          echo "Testing CLI help output..."
+          node dist/cli.js --help
+          echo "✅ CLI help works"
+
+          echo "Testing CLI version output..."
+          node dist/cli.js --version
+          echo "✅ CLI version works"
+      - shell: bash
+        run: |
+          echo "Testing MCP tools..."
+          echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}' | timeout 10s node dist/cli.js --urls "Test:https://example.com/llms.txt" --transport stdio
+          echo "✅ MCP tools work"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: build
+          path: .
+          include-hidden-files: true
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: ${{ (github.ref_type == 'tag' && !inputs.job) || inputs.job == 'all' || inputs.job == 'release' }}
+    needs: [build]
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          name: build
+      - uses: actions/setup-node@v6
+        with:
+          cache: "npm"
+          node-version-file: "package.json"
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            let tag_name;
+            if (context.ref.startsWith('refs/tags/')) {
+              tag_name = context.ref.replace(/^refs\/tags\//, '');
+            } else {
+              const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+              tag_name = `v${pkg.version}`;
+            }
+
+            const name = tag_name.replace(/^v/, '');
+            const version = name;
+            const prerelease = version.startsWith("0.") || version.includes("-");
+
+            let body = '';
+            try {
+              const { data: releases } = await github.rest.repos.listReleases({
+                owner,
+                repo,
+                per_page: 1,
+              });
+              const latestRelease = releases[0];
+              if (!latestRelease) throw new Error('No previous release');
+              const latestReleaseVersion = latestRelease.tag_name;
+              body = `changes: [${latestReleaseVersion}...${tag_name}](https://github.com/${owner}/${repo}/compare/${latestReleaseVersion}...${tag_name})`;
+            } catch (e) {
+              body = `Initial release ${tag_name}`;
+            }
+
+            await github.rest.repos.createRelease({
+              body,
+              name,
+              owner,
+              prerelease,
+              repo,
+              tag_name,
+            });
+
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: ${{ github.repository == 'chr33s/workerstack' && (!inputs.job || inputs.job == 'all' || inputs.job == 'publish') }}
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          name: build
+      - uses: actions/setup-node@v5
+        with:
+          cache: "npm"
+          node-version-file: "package.json"
+          registry-url: "https://registry.npmjs.org"
+      - run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
