@@ -39,9 +39,9 @@ jobs:
         with:
           cache: "npm"
           node-version-file: "package.json"
-      - run: npm install && npm install --prefix=./spec
+      - run: npm install
       - run: npm run check
-      - run: npm run build --workspaces --if-present --prefix=./spec
+      - run: npm run build
       - run: npm run test
       - shell: bash
         run: |

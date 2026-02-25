@@ -279,7 +279,7 @@ process.on("unhandledRejection", (reason) => {
 
 // Run the CLI
 if (import.meta.url === `file://${process.argv[1]}`) {
-	console.log("running cli")
+	console.log("running cli");
 	main().catch((error) => {
 		console.error("Error:", error);
 		process.exit(1);
